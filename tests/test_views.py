@@ -413,3 +413,62 @@ def test_edit_unknown_id_is_404(client: FlaskClient, method: str) -> None:
     response = getattr(client, method)("/projects/999/edit", data=form_data())
 
     assert response.status_code == 404
+
+
+# --- delete -----------------------------------------------------------------
+
+
+def test_detail_links_to_delete_confirmation(app: Flask, client: FlaskClient) -> None:
+    project = make_project()
+
+    response = client.get(f"/projects/{project.id}")
+
+    assert f'href="/projects/{project.id}/delete"' in response.text
+
+
+def test_delete_get_shows_confirmation_and_deletes_nothing(
+    app: Flask, client: FlaskClient
+) -> None:
+    project = make_project(name="Build a shed")
+
+    response = client.get(f"/projects/{project.id}/delete")
+
+    assert response.status_code == 200
+    assert "Delete “Build a shed”?" in response.text
+    assert (
+        f'<form method="post" action="/projects/{project.id}/delete">' in response.text
+    )
+    assert len(all_projects()) == 1
+
+
+def test_delete_post_removes_project_and_redirects(
+    app: Flask, client: FlaskClient
+) -> None:
+    keep = make_project(name="Keep me")
+    project = make_project(name="Build a shed")
+
+    response = client.post(f"/projects/{project.id}/delete")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/"
+    assert [p.name for p in all_projects()] == [keep.name]
+    index = client.get("/")
+    assert "Deleted “Build a shed”." in index.text
+    assert client.get(f"/projects/{project.id}").status_code == 404
+
+
+@pytest.mark.parametrize("method", ["put", "delete", "patch"])
+def test_delete_only_accepts_get_and_post(
+    app: Flask, client: FlaskClient, method: str
+) -> None:
+    project = make_project()
+
+    response = getattr(client, method)(f"/projects/{project.id}/delete")
+
+    assert response.status_code == 405
+    assert len(all_projects()) == 1
+
+
+@pytest.mark.parametrize("method", ["get", "post"])
+def test_delete_unknown_id_is_404(client: FlaskClient, method: str) -> None:
+    assert getattr(client, method)("/projects/999/delete").status_code == 404

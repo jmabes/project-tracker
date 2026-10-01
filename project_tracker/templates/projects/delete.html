@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Delete {{ project.name }}{% endblock %}
+
+{% block content %}
+  <h1>Delete “{{ project.name }}”?</h1>
+  <p>This permanently removes the project. It cannot be undone.</p>
+  <p>To keep a finished project, <a href="{{ url_for('projects.edit', project_id=project.id) }}">edit it</a>
+    and set its status to Done or Abandoned instead.</p>
+  <form method="post" action="{{ url_for('projects.delete', project_id=project.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="actions">
+      <button type="submit" class="danger">Delete project</button>
+      <a href="{{ url_for('projects.detail', project_id=project.id) }}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

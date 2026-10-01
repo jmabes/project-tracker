@@ -14,5 +14,6 @@
   </dl>
   <div class="actions">
     <a href="{{ url_for('projects.edit', project_id=project.id) }}">Edit</a>
+    <a href="{{ url_for('projects.confirm_delete', project_id=project.id) }}">Delete</a>
   </div>
 {% endblock %}

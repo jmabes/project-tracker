@@ -14,6 +14,7 @@ from project_tracker.models import Project
 from project_tracker.services import (
     ProjectValidationError,
     create_project,
+    delete_project,
     update_project,
 )
 
@@ -79,6 +80,23 @@ def update(project_id: int) -> Response | str:
         return _render_edit_form(project, form)
     flash(f"Saved “{project.name}”.")
     return redirect(url_for(".detail", project_id=project.id))
+
+
+@bp.get("/projects/<int:project_id>/delete")
+def confirm_delete(project_id: int) -> str:
+    """Ask for confirmation before deleting a project."""
+    project = db.get_or_404(Project, project_id)
+    return render_template("projects/delete.html", project=project)
+
+
+@bp.post("/projects/<int:project_id>/delete")
+def delete(project_id: int) -> Response:
+    """Delete a project after the user confirmed it."""
+    project = db.get_or_404(Project, project_id)
+    name = project.name
+    delete_project(project)
+    flash(f"Deleted “{name}”.")
+    return redirect(url_for(".index"))
 
 
 def _render_create_form(form: ProjectForm) -> str:
