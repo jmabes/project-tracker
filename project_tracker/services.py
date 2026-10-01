@@ -2,13 +2,14 @@
 
 Web forms and the spreadsheet importer both call ``validate_project`` so every
 project in the database has passed the same checks. All project writes go through
-``create_project``, ``update_project`` and ``delete_project``. The main list's
-filtering and sorting is built by ``parse_list_options`` and ``list_projects``.
+``create_project``, ``create_projects``, ``update_project`` and ``delete_project``.
+The main list's filtering and sorting is built by ``parse_list_options`` and
+``list_projects``.
 """
 
 import dataclasses
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Literal
@@ -134,6 +135,31 @@ def create_project(raw: Mapping[str, object]) -> Project:
     db.session.add(project)
     _commit_or_name_error()
     return project
+
+
+def create_projects(raws: Sequence[Mapping[str, object]]) -> list[Project]:
+    """Validate several projects and save them all in one transaction.
+
+    Every input is validated before anything is added, and names must also be
+    unique among the inputs. Either every project is saved or none is.
+
+    Raises:
+        ProjectValidationError: For the first input that fails, or if the commit
+            fails; nothing is saved in either case.
+    """
+    batch = [validate_project(raw) for raw in raws]
+    folded = [data.name.casefold() for data in batch]
+    if len(set(folded)) != len(folded):
+        raise ProjectValidationError({"name": [NAME_TAKEN_MESSAGE]})
+    projects = [Project(**_fields(data)) for data in batch]
+    db.session.add_all(projects)
+    try:
+        _commit_or_name_error()
+    except Exception:
+        # Any other database error: drop the pending projects so none are saved.
+        db.session.rollback()
+        raise
+    return projects
 
 
 def update_project(project: Project, raw: Mapping[str, object]) -> Project:
