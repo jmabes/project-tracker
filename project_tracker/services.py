@@ -1,16 +1,19 @@
-"""Project validation and writes: the one place field rules are enforced.
+"""Project validation, writes and list queries.
 
 Web forms and the spreadsheet importer both call ``validate_project`` so every
 project in the database has passed the same checks. All project writes go through
-``create_project``, ``update_project`` and ``delete_project``.
+``create_project``, ``update_project`` and ``delete_project``. The main list's
+filtering and sorting is built by ``parse_list_options`` and ``list_projects``.
 """
 
+import dataclasses
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Literal
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, Select, case, func, select
 from sqlalchemy.exc import IntegrityError
 
 from project_tracker import choices
@@ -226,3 +229,156 @@ def _name_taken(name: str, exclude_id: int | None) -> bool:
     folded = name.casefold()
     rows = db.session.execute(select(Project.id, Project.name)).all()
     return any(row.name.casefold() == folded and row.id != exclude_id for row in rows)
+
+
+# --- project list ----------------------------------------------------------
+
+Direction = Literal["asc", "desc"]
+
+SORT_COLUMNS: tuple[str, ...] = (
+    "name",
+    "category",
+    "medium",
+    "priority",
+    "status",
+    "start_date",
+    "estimated_completion_date",
+)
+DEFAULT_SORT = "priority"
+# Every column starts ascending except priority, which starts High first.
+DEFAULT_DIRECTIONS: dict[str, Direction] = {"priority": "desc"}
+
+
+def default_direction(sort: str) -> Direction:
+    """Return the direction a column sorts in when first chosen."""
+    return DEFAULT_DIRECTIONS.get(sort, "asc")
+
+
+@dataclass(frozen=True)
+class ListOptions:
+    """Filters and sort order for the main project list.
+
+    A ``None`` filter means "any value". Finished projects (``FINISHED_STATUSES``)
+    are hidden unless ``show_finished`` is set or ``status`` names one explicitly.
+    """
+
+    category: str | None = None
+    medium: str | None = None
+    priority: str | None = None
+    status: str | None = None
+    show_finished: bool = False
+    sort: str = DEFAULT_SORT
+    # None means the sort column's own default direction (see default_direction).
+    direction: Direction | None = None
+
+    def __post_init__(self) -> None:
+        """Fill in the sort column's default direction when none was given."""
+        if self.direction is None:
+            object.__setattr__(self, "direction", default_direction(self.sort))
+
+    @property
+    def hides_finished(self) -> bool:
+        """Return True if finished projects are being left out of the list."""
+        return not self.show_finished and self.status is None
+
+    def replace(self, **changes: object) -> "ListOptions":
+        """Return a copy with some options changed."""
+        return dataclasses.replace(self, **changes)
+
+    def query_args(self) -> dict[str, str]:
+        """Return query-string arguments that reproduce these options.
+
+        Defaults are left out so the plain list stays at ``/``.
+        """
+        args = {
+            field: value
+            for field in CHOICE_FIELDS
+            if (value := getattr(self, field)) is not None
+        }
+        if self.show_finished:
+            args["show_finished"] = "1"
+        if (self.sort, self.direction) != (
+            DEFAULT_SORT,
+            default_direction(DEFAULT_SORT),
+        ):
+            args["sort"] = self.sort
+            args["dir"] = self.direction
+        return args
+
+
+def parse_list_options(args: Mapping[str, str]) -> ListOptions:
+    """Build list options from query-string arguments.
+
+    Unknown or invalid values are ignored and the default is used instead, so a
+    hand-edited or stale URL still shows a list rather than an error. Accepted
+    arguments: ``category``, ``medium``, ``priority``, ``status`` (an allowed value),
+    ``show_finished`` (``1``), ``sort`` (a name in ``SORT_COLUMNS``) and ``dir``
+    (``asc`` or ``desc``; defaults to the column's own default direction).
+    """
+    filters = {
+        field: value if (value := args.get(field)) in allowed else None
+        for field, allowed in CHOICE_FIELDS.items()
+    }
+    sort = args.get("sort")
+    if sort not in SORT_COLUMNS:
+        sort = DEFAULT_SORT
+    direction = args.get("dir")
+    if direction != "asc" and direction != "desc":
+        direction = None
+    return ListOptions(
+        **filters,
+        show_finished=args.get("show_finished") == "1",
+        sort=sort,
+        direction=direction,
+    )
+
+
+def project_list_query(options: ListOptions) -> Select[tuple[Project]]:
+    """Return the SELECT for the main project list.
+
+    Filters combine with AND. Priority and status sort by their position in
+    ``project_tracker.choices`` (descending priority puts High first); names sort
+    ignoring case; empty values sort last in both directions. Ties are broken by
+    name, then id, so the order is stable.
+    """
+    query = select(Project)
+    for field in CHOICE_FIELDS:
+        value = getattr(options, field)
+        if value is not None:
+            query = query.where(getattr(Project, field) == value)
+    if options.hides_finished:
+        query = query.where(Project.status.not_in(choices.FINISHED_STATUSES))
+
+    key = _sort_key(options.sort)
+    ordered = key.desc() if options.direction == "desc" else key.asc()
+    name_key = func.casefold(Project.name)
+    # "key IS NULL" is 0 for values and 1 for empties, so empties always come last.
+    return query.order_by(key.is_(None), ordered, name_key, Project.id)
+
+
+def list_projects(options: ListOptions) -> list[Project]:
+    """Return the projects matching ``options``, in display order."""
+    return list(db.session.scalars(project_list_query(options)))
+
+
+def count_projects() -> int:
+    """Return how many projects exist, ignoring any filters."""
+    return db.session.scalar(select(func.count(Project.id))) or 0
+
+
+def _sort_key(sort: str) -> ColumnElement[object]:
+    """Return the SQL expression a list column sorts by."""
+    if sort == "name":
+        return func.casefold(Project.name)
+    if sort == "priority":
+        # Rank by importance so that larger means more important: High sorts last
+        # ascending and first descending. Unknown values rank NULL (always last).
+        ranks = {
+            value: len(choices.PRIORITIES) - i
+            for i, value in enumerate(choices.PRIORITIES)
+        }
+        return case(ranks, value=Project.priority)
+    if sort == "status":
+        ranks = {value: i for i, value in enumerate(choices.STATUSES)}
+        return case(ranks, value=Project.status)
+    return getattr(Project, sort)

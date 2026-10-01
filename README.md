@@ -5,9 +5,9 @@ Each project has a name, category, medium, priority, status, and optional start 
 estimated completion dates. It is built for one user on a home server, reached over the
 LAN and Tailscale.
 
-> **Status:** Milestone 2 (project pages). You can create, view, edit, and delete
-> projects in the browser. The sortable, filterable list, spreadsheet import, and
-> deployment guide arrive in later milestones. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status:** Milestone 3 (project list). You can create, view, edit, and delete
+> projects in the browser, and filter and sort the main list. Spreadsheet import and
+> the deployment guide arrive in later milestones. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 Stack: Flask, SQLite (Flask-SQLAlchemy + Flask-Migrate), Flask-WTF, python-calamine,
 Gunicorn, pytest and ruff. The reasoning and versions are in
@@ -47,7 +47,7 @@ Run all three before every commit. CI runs the same checks on every pull request
 ```
 
 Each command should finish with no errors. pytest ends with a line like
-`119 passed in 0.70s`.
+`377 passed in 4.38s`.
 
 ## Running the development server
 
@@ -69,7 +69,7 @@ Open <http://127.0.0.1:5000/>. The pages are:
 
 | Page | What it does |
 | --- | --- |
-| `/` | Lists every project by name (temporary; Milestone 3 adds sorting and filtering). |
+| `/` | The project list: a table you can filter by category, medium, priority, and status, and sort by clicking any column heading (click again to reverse). Done and Abandoned projects are hidden until you click **Show finished projects**. |
 | `/projects/new` | Form to add a project. Also linked as **New project** in the header. |
 | `/projects/<id>` | One project's details, with **Edit** and **Delete** links. |
 | `/projects/<id>/edit` | Change any field. To finish a project, set its status to Done or Abandoned; it stays in the tracker. |
@@ -78,6 +78,25 @@ Open <http://127.0.0.1:5000/>. The pages are:
 If a field is invalid the form is shown again with your values kept and the error
 under the field. Names must be unique ignoring case, so "Café" and "CAFÉ" count as
 the same name.
+
+### Bookmarkable list views
+
+The list's filters and sort order live in the address bar, so you can bookmark a
+view (for example "High-priority Tech projects") and the back button works. The
+list understands these query-string parameters; anything else, or an invalid value,
+is ignored and the default is used:
+
+| Parameter | Values | Default |
+| --- | --- | --- |
+| `category`, `medium`, `priority`, `status` | One allowed value each (as shown in the filter menus). Filters combine: a project must match all of them. | Any |
+| `show_finished` | `1` to include Done and Abandoned projects. Choosing Done or Abandoned as the `status` filter shows them too. | Hidden |
+| `sort` | `name`, `category`, `medium`, `priority`, `status`, `start_date`, `estimated_completion_date` | `priority` |
+| `dir` | `asc` or `desc` | `desc` (High first) for priority, `asc` for the rest |
+
+Priority sorts by importance (High, Medium, Low) and status in workflow order
+(Not started, In progress, On hold, Done, Abandoned), not alphabetically. Names sort
+ignoring case. Projects without a date always sort after those with one.
+Example: `/?category=Tech&priority=High&sort=start_date&dir=asc`.
 
 The development server is for local use only. Production runs under Gunicorn and
 systemd; that guide arrives with the deployment milestone.

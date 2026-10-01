@@ -7,7 +7,7 @@ from typing import Any
 from flask import Flask
 
 from project_tracker.config import CONFIG_ENV_VAR, CONFIGS, env_overrides
-from project_tracker.extensions import csrf, db, migrate
+from project_tracker.extensions import csrf, db, migrate, register_sql_functions
 
 
 def create_app(
@@ -46,6 +46,8 @@ def create_app(
         os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+    with app.app_context():
+        register_sql_functions(db.engine)
     migrate.init_app(app, db)
     csrf.init_app(app)
 

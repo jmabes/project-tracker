@@ -4,33 +4,71 @@ Views only collect input and render results; every write goes through
 ``project_tracker.services``.
 """
 
-from flask import Blueprint, flash, redirect, render_template, url_for
-from sqlalchemy import select
+from collections.abc import Callable
+from dataclasses import dataclass
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from werkzeug.wrappers import Response
 
 from project_tracker.extensions import db
 from project_tracker.forms import PROJECT_FIELDS, ProjectForm
 from project_tracker.models import Project
 from project_tracker.services import (
+    CHOICE_FIELDS,
+    SORT_COLUMNS,
+    ListOptions,
     ProjectValidationError,
+    count_projects,
     create_project,
+    default_direction,
     delete_project,
+    list_projects,
+    parse_list_options,
     update_project,
 )
 
 bp = Blueprint("projects", __name__)
 
+COLUMN_LABELS: dict[str, str] = {
+    "name": "Name",
+    "category": "Category",
+    "medium": "Medium",
+    "priority": "Priority",
+    "status": "Status",
+    "start_date": "Start date",
+    "estimated_completion_date": "Estimated completion",
+}
+
+
+@dataclass(frozen=True)
+class SortHeader:
+    """A column heading in the project list, linking to sort by that column."""
+
+    label: str
+    url: str
+    aria_sort: str | None  # "ascending"/"descending" on the current sort column
+
 
 @bp.get("/")
 def index() -> str:
-    """List every project's name, linking to its detail page.
+    """Show the project list, filtered and sorted by the query string."""
+    options = parse_list_options(request.args)
+    projects = list_projects(options)
 
-    Temporary: Milestone 3 replaces this with the sortable, filterable list.
-    """
-    projects = sorted(
-        db.session.scalars(select(Project)), key=lambda p: p.name.casefold()
+    def list_url(**changes: object) -> str:
+        """Return the URL of this list with some options changed."""
+        return url_for(".index", **options.replace(**changes).query_args())
+
+    return render_template(
+        "projects/index.html",
+        projects=projects,
+        options=options,
+        choice_fields=CHOICE_FIELDS,
+        headers=[_sort_header(options, column, list_url) for column in SORT_COLUMNS],
+        list_url=list_url,
+        # Only needed to tell "no projects yet" apart from "nothing matches".
+        total=count_projects() if not projects else None,
     )
-    return render_template("projects/index.html", projects=projects)
 
 
 @bp.get("/projects/<int:project_id>")
@@ -97,6 +135,23 @@ def delete(project_id: int) -> Response:
     delete_project(project)
     flash(f"Deleted “{name}”.")
     return redirect(url_for(".index"))
+
+
+def _sort_header(
+    options: ListOptions, column: str, list_url: Callable[..., str]
+) -> SortHeader:
+    """Build a column heading; clicking the current sort column flips direction."""
+    if column == options.sort:
+        direction = "asc" if options.direction == "desc" else "desc"
+        aria_sort = "ascending" if options.direction == "asc" else "descending"
+    else:
+        direction = default_direction(column)
+        aria_sort = None
+    return SortHeader(
+        label=COLUMN_LABELS[column],
+        url=list_url(sort=column, direction=direction),
+        aria_sort=aria_sort,
+    )
 
 
 def _render_create_form(form: ProjectForm) -> str:
