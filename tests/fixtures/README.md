@@ -6,6 +6,10 @@ spreadsheets use real native date cells; the CSV files hold the dates as
 `YYYY-MM-DD` text (`projects-bom.csv` starts with a UTF-8 byte order mark, as Excel
 writes it).
 
+`projects-titled.ods` is a short sheet with a title and a note above its header row
+(row 4), like many hand-made spreadsheets, to test that the importer finds the header
+below them.
+
 Don't edit these files by hand. Change the rows in `scripts/make_fixtures.py` and
 regenerate all of them from the repository root:
 

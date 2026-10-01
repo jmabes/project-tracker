@@ -21,6 +21,7 @@ from project_tracker.importer.preview import (
     decode_rows,
     display_value,
     encode_rows,
+    find_header,
     map_columns,
     normalize_header,
     preview_sheet,
@@ -130,7 +131,7 @@ def test_source_rows_fill_missing_columns_and_short_rows_with_none() -> None:
         header=["name", "category", "medium", "priority", "status", "start date"],
         rows=[SheetRow(number=3, cells=["A", "Tech"])],
     )
-    [result] = source_rows(sheet, map_columns(sheet.header))
+    [result] = source_rows(sheet.rows, map_columns(sheet.header))
     assert result.number == 3
     assert result.values == {
         "name": "A",
@@ -395,3 +396,98 @@ def test_decode_rows_rejects_damaged_data(text: str) -> None:
 )
 def test_display_value(value: object, expected: str) -> None:
     assert display_value(value) == expected
+
+
+# --- finding the header row below titles and notes -------------------------------
+
+HEADER_CELLS: list[Cell] = ["Name", "Category", "Medium", "Priority", "Status"]
+
+
+def sheet_from(grid: list[list[Cell]]) -> ParsedSheet:
+    """Build a ParsedSheet the way the parser would, from a grid starting at row 1."""
+    rows = [SheetRow(number=i, cells=cells) for i, cells in enumerate(grid, start=1)]
+    first, *rest = rows
+    return ParsedSheet(
+        header=[str(c).strip() for c in first.cells], rows=rest, header_number=1
+    )
+
+
+def test_header_in_first_row_is_used_directly() -> None:
+    match = find_header(sheet_from([HEADER_CELLS, ["A", "Tech", "DIY", "Low", "Done"]]))
+    assert (match.number, match.ignored_rows) == (1, 0)
+    assert [r.number for r in match.rows] == [2]
+
+
+def test_title_and_notes_above_header_are_ignored() -> None:
+    match = find_header(
+        sheet_from(
+            [
+                ["My projects"],
+                ["Last updated", date(2026, 9, 1)],
+                [" name ", "CATEGORY", "medium", "Priority", "status", "Notes"],
+                ["A", "Tech", "DIY", "Low", "Done"],
+                ["B", "Home", "DIY", "Low", "Done"],
+            ]
+        )
+    )
+    assert (match.number, match.ignored_rows) == (3, 2)
+    assert [r.number for r in match.rows] == [4, 5]
+    assert match.columns.ignored == ["Notes"]
+
+
+def test_row_with_only_some_column_names_is_not_the_header() -> None:
+    match = find_header(
+        sheet_from(
+            [
+                ["Name", "Category"],  # e.g. a legend, not the header
+                HEADER_CELLS,
+                ["A", "Tech", "DIY", "Low", "Done"],
+            ]
+        )
+    )
+    assert match.number == 2
+
+
+def test_no_header_row_reports_closest_match() -> None:
+    with pytest.raises(
+        ImportFileError,
+        match=r"closest match, row 2, is missing these required columns: status\.",
+    ):
+        find_header(
+            sheet_from(
+                [["My projects"], ["Name", "Category", "Medium", "Priority"], ["A"]]
+            )
+        )
+
+
+def test_no_column_names_at_all_lists_required_columns() -> None:
+    with pytest.raises(
+        ImportFileError,
+        match="One row must name these required columns: name, category, medium, "
+        "priority, status.",
+    ):
+        find_header(sheet_from([["My projects"], ["A", "Tech"]]))
+
+
+def test_found_header_naming_a_field_twice_is_an_error() -> None:
+    with pytest.raises(ImportFileError, match="appears more than once"):
+        find_header(sheet_from([["Title"], [*HEADER_CELLS, "name"], ["A"]]))
+
+
+def test_header_with_no_rows_below_is_an_error(app: Flask) -> None:
+    with pytest.raises(ImportFileError, match="no project rows"):
+        preview_sheet(sheet_from([["My projects"], HEADER_CELLS]))
+
+
+def test_titled_ods_fixture(app: Flask) -> None:
+    preview = preview_fixture("projects-titled.ods")
+    assert (preview.header_row, preview.ignored_rows) == (4, 2)
+    assert [(r.number, r.status) for r in preview.rows] == [(5, "valid"), (6, "valid")]
+    first = preview.rows[0].data
+    assert first and first.start_date == date(2026, 4, 1)
+
+
+@pytest.mark.parametrize("name", FIXTURE_FILES)
+def test_plain_fixtures_report_header_in_row_1(app: Flask, name: str) -> None:
+    preview = preview_fixture(name)
+    assert (preview.header_row, preview.ignored_rows) == (1, 0)

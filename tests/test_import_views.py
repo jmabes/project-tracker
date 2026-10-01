@@ -170,6 +170,18 @@ def test_other_extensions_are_rejected(
     assert names() == []
 
 
+def test_title_rows_above_header_are_ignored(client: FlaskClient) -> None:
+    response = upload_fixture(client, "projects-titled.ods")
+    text = page_text(response)
+    assert "2 ready to import, 0 with errors, 0 skipped" in text
+    assert "Column names found in row 4; the 2 rows above it" in text
+
+    response = confirm(client, payload_from(response))
+
+    assert response.status_code == 302
+    assert names() == ["Shed roof", "Tax return"]
+
+
 def test_missing_required_column_is_reported(client: FlaskClient) -> None:
     response = upload(client, "p.csv", b"Name,Category\r\nA,Tech\r\n")
     assert "missing these required columns: medium, priority, status" in page_text(

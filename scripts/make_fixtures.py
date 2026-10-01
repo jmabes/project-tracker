@@ -137,6 +137,31 @@ def write_ods(path: Path) -> None:
     document.save(str(path))
 
 
+# A sheet laid out as people often do: a title and a note above the header row.
+# The importer finds the header in row 4 and ignores what is above it.
+TITLED_ROWS: list[list[Cell]] = [
+    ["My projects", None, None, None, None, None, None],
+    ["Exported from the old tracker", None, None, None, None, None, None],
+    [None, None, None, None, None, None, None],
+    HEADER[:7],
+    ["Shed roof", "Home", "DIY", "High", "In progress", date(2026, 4, 1), None],
+    ["Tax return", "Finance", "Research", "Medium", "Not started", None, None],
+]
+
+
+def write_titled_ods(path: Path) -> None:
+    """Write a .ods sheet that has a title and a note above the header row."""
+    document = OpenDocumentSpreadsheet()
+    table = Table(name="Projects")
+    for row in TITLED_ROWS:
+        table_row = TableRow()
+        for value in row:
+            table_row.addElement(ods_cell(value))
+        table.addElement(table_row)
+    document.spreadsheet.addElement(table)
+    document.save(str(path))
+
+
 def main() -> None:
     """Write every fixture file."""
     FIXTURES.mkdir(parents=True, exist_ok=True)
@@ -144,6 +169,7 @@ def main() -> None:
     write_csv(FIXTURES / "projects-bom.csv", bom=True)
     write_xlsx(FIXTURES / "projects.xlsx")
     write_ods(FIXTURES / "projects.ods")
+    write_titled_ods(FIXTURES / "projects-titled.ods")
     print(f"Wrote fixtures to {FIXTURES}")
 
 

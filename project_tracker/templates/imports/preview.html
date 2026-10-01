@@ -16,6 +16,11 @@
     {{ preview.count("skipped") }} skipped (duplicate name).
     Nothing has been saved yet.
   </p>
+  {% if preview.ignored_rows %}
+    <p>Column names found in row {{ preview.header_row }}; the
+      {{ preview.ignored_rows }} row{{ "" if preview.ignored_rows == 1 else "s" }} above it
+      (such as a title) {{ "was" if preview.ignored_rows == 1 else "were" }} ignored.</p>
+  {% endif %}
   {% if preview.ignored_columns %}
     <p>Ignored columns: {{ preview.ignored_columns|join(", ") }}.</p>
   {% endif %}

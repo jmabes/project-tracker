@@ -34,13 +34,17 @@ class SheetRow:
 
 @dataclass(frozen=True)
 class ParsedSheet:
-    """The header row and the data rows below it.
+    """The first non-blank row and the rows below it.
 
-    Blank rows are left out. ``header`` holds each header cell as trimmed text.
+    Blank rows are left out. ``header`` holds the first non-blank row's cells as
+    text (see ``header_text``) and ``header_number`` is its row number. It is
+    usually the column names, but a sheet may start with a title or notes; the
+    preview step looks further down for the real header row.
     """
 
     header: list[str]
     rows: list[SheetRow]
+    header_number: int = 1
 
 
 def parse_upload(filename: str, stream: IO[bytes]) -> ParsedSheet:
@@ -115,7 +119,7 @@ def is_blank(value: Cell) -> bool:
 
 
 def _to_sheet(grid: list[list[Cell]]) -> ParsedSheet:
-    """Split a grid of cells into the header (first non-blank row) and data rows."""
+    """Split a grid of cells into the first non-blank row and the rows below it."""
     numbered = [
         SheetRow(number=index, cells=list(cells))
         for index, cells in enumerate(grid, start=1)
@@ -124,8 +128,13 @@ def _to_sheet(grid: list[list[Cell]]) -> ParsedSheet:
     if not numbered:
         raise ImportFileError("This file is empty.")
     header_row, *rows = numbered
-    header = [
-        value.strip() if isinstance(value, str) else str(value)
-        for value in header_row.cells
-    ]
-    return ParsedSheet(header=header, rows=rows)
+    return ParsedSheet(
+        header=header_text(header_row.cells),
+        rows=rows,
+        header_number=header_row.number,
+    )
+
+
+def header_text(cells: list[Cell]) -> list[str]:
+    """Return a row's cells as trimmed text, for matching against column names."""
+    return [value.strip() if isinstance(value, str) else str(value) for value in cells]

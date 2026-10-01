@@ -156,3 +156,15 @@ def test_xlsm_rejected_even_with_real_workbook_contents() -> None:
 def test_extension_check_ignores_case() -> None:
     with (FIXTURES / "projects.ods").open("rb") as f:
         assert parse_upload("PROJECTS.ODS", f).header == HEADER
+
+
+def test_header_number_is_first_non_blank_row() -> None:
+    sheet = parse_upload("x.csv", io.BytesIO(b",\r\n\r\nTitle\r\nName\r\nA\r\n"))
+    assert (sheet.header_number, sheet.header) == (3, ["Title"])
+    assert [row.number for row in sheet.rows] == [4, 5]
+
+
+def test_titled_ods_keeps_title_as_first_row() -> None:
+    sheet = parse_fixture("projects-titled.ods")
+    assert (sheet.header_number, sheet.header[0]) == (1, "My projects")
+    assert [row.number for row in sheet.rows] == [2, 4, 5, 6]

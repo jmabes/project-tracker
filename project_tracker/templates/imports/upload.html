@@ -27,7 +27,8 @@
 
   <h2>What the file needs</h2>
   <ul>
-    <li>The first sheet is read. Its first non-blank row names the columns.</li>
+    <li>The first sheet is read. The header is the first row that names all the
+      required columns; anything above it, such as a title, is ignored.</li>
     <li>Required columns: {% for c in required_columns %}<code>{{ c }}</code>{{ ", " if not loop.last }}{% endfor %}.
       Optional: {% for c in optional_columns %}<code>{{ c }}</code>{{ ", " if not loop.last }}{% endfor %}.
       Case doesn't matter and a space can stand for an underscore, so

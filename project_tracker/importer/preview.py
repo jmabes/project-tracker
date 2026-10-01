@@ -11,6 +11,7 @@ field (see ``encode_rows``), so the server keeps no state between the two reques
 docs/decisions/0002-import-preview-state.md explains why.
 """
 
+import dataclasses
 import json
 import re
 from collections.abc import Sequence
@@ -21,7 +22,13 @@ from typing import Literal
 from sqlalchemy import select
 
 from project_tracker.extensions import db
-from project_tracker.importer.parsers import Cell, ImportFileError, ParsedSheet
+from project_tracker.importer.parsers import (
+    Cell,
+    ImportFileError,
+    ParsedSheet,
+    SheetRow,
+    header_text,
+)
 from project_tracker.models import Project
 from project_tracker.services import (
     CHOICE_FIELDS,
@@ -88,6 +95,55 @@ def map_columns(header: Sequence[str]) -> ColumnMap:
 
 
 @dataclass(frozen=True)
+class HeaderMatch:
+    """The header row found in a sheet, and the data rows below it."""
+
+    number: int
+    columns: ColumnMap
+    rows: list[SheetRow]
+    # Non-blank rows above the header (titles, notes) that were ignored.
+    ignored_rows: int
+
+
+def find_header(sheet: ParsedSheet) -> HeaderMatch:
+    """Find the first row that names every required column.
+
+    Anything above that row, such as a title or notes, is ignored. The match uses
+    the same rules as ``map_columns``.
+
+    Raises:
+        ImportFileError: If no row names every required column, or the header
+            row names a field twice.
+    """
+    candidates = [(sheet.header_number, sheet.header)]
+    candidates += [(row.number, header_text(row.cells)) for row in sheet.rows]
+    required = set(REQUIRED_COLUMNS)
+    closest: tuple[int, set[str]] | None = None
+    for index, (number, header) in enumerate(candidates):
+        found = {normalize_header(text) for text in header} & required
+        if found == required:
+            return HeaderMatch(
+                number=number,
+                columns=map_columns(header),
+                rows=sheet.rows[index:],
+                ignored_rows=index,
+            )
+        if found and (closest is None or len(found) > len(closest[1])):
+            closest = (number, found)
+    if closest is None:
+        raise ImportFileError(
+            "Couldn't find the header row. One row must name these required "
+            f"columns: {', '.join(REQUIRED_COLUMNS)}."
+        )
+    number, found = closest
+    missing = [column for column in REQUIRED_COLUMNS if column not in found]
+    raise ImportFileError(
+        f"Couldn't find the header row. The closest match, row {number}, is "
+        f"missing these required columns: {', '.join(missing)}."
+    )
+
+
+@dataclass(frozen=True)
 class SourceRow:
     """One row's raw values keyed by field name, with its spreadsheet row number."""
 
@@ -95,13 +151,13 @@ class SourceRow:
     values: dict[str, Cell | None]
 
 
-def source_rows(sheet: ParsedSheet, columns: ColumnMap) -> list[SourceRow]:
+def source_rows(sheet_rows: Sequence[SheetRow], columns: ColumnMap) -> list[SourceRow]:
     """Pick each project field's value out of every data row.
 
     Fields with no column, and cells past the end of a short row, are ``None``.
     """
     rows = []
-    for row in sheet.rows:
+    for row in sheet_rows:
         values: dict[str, Cell | None] = dict.fromkeys(COLUMNS)
         for name, index in columns.positions.items():
             if index < len(row.cells):
@@ -123,10 +179,16 @@ class RowResult:
 
 @dataclass(frozen=True)
 class Preview:
-    """Every row's outcome, plus the header columns that were ignored."""
+    """Every row's outcome, plus what was ignored around the data.
+
+    ``header_row`` is the spreadsheet row the column names were found in, and
+    ``ignored_rows`` counts the non-blank rows above it (titles, notes).
+    """
 
     rows: list[RowResult]
     ignored_columns: list[str] = field(default_factory=list)
+    header_row: int | None = None
+    ignored_rows: int = 0
 
     @property
     def valid_rows(self) -> list[RowResult]:
@@ -144,16 +206,20 @@ class Preview:
 
 
 def preview_sheet(sheet: ParsedSheet) -> Preview:
-    """Map a parsed sheet's columns and check every data row.
+    """Find the header row, map its columns and check every data row below it.
 
     Raises:
-        ImportFileError: If the header is unusable or there are no data rows.
+        ImportFileError: If no usable header row is found or there are no data
+            rows below it.
     """
-    columns = map_columns(sheet.header)
-    rows = source_rows(sheet, columns)
+    header = find_header(sheet)
+    rows = source_rows(header.rows, header.columns)
     if not rows:
         raise ImportFileError("This file has a header row but no project rows.")
-    return build_preview(rows, ignored_columns=columns.ignored)
+    preview = build_preview(rows, ignored_columns=header.columns.ignored)
+    return dataclasses.replace(
+        preview, header_row=header.number, ignored_rows=header.ignored_rows
+    )
 
 
 def build_preview(
