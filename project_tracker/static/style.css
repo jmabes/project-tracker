@@ -69,15 +69,86 @@ h1 {
   background: #fbeaea;
 }
 
-/* Project list and detail */
-.project-list {
-  padding-left: 1.25rem;
+main.wide {
+  max-width: 72rem;
 }
 
-.project-list li {
-  margin-bottom: 0.25rem;
+/* Project list: filters */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.filters .field {
+  flex: 1 1 9rem;
+}
+
+.filters .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.filters .checkbox input {
+  width: auto;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.finished-toggle,
+.empty-state {
+  margin: 0 0 1rem;
+}
+
+/* Project list: table. The wrapper scrolls sideways on narrow screens. */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.project-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.project-table th,
+.project-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #d0d7de;
+  text-align: left;
+  vertical-align: top;
+}
+
+.project-table th {
+  white-space: nowrap;
+  background: #f6f8fa;
+}
+
+.project-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.project-table .name {
+  min-width: 12rem;
   overflow-wrap: anywhere;
 }
+
+.project-table .date {
+  white-space: nowrap;
+}
+
+/* Project detail */
 
 .fields {
   display: grid;
