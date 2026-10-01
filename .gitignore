@@ -1,0 +1,24 @@
+# Virtual environment
+.venv/
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Local data and configuration (never commit secrets)
+instance/
+*.db
+*.sqlite
+*.sqlite3
+.env
+
+# Spreadsheet uploads
+uploads/
+
+# Coverage output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml

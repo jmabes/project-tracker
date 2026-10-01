@@ -97,7 +97,8 @@ A `Project` has exactly these user-facing fields (plus `id`, `created_at`, `upda
 
 - Type hints on all functions; short docstrings on modules and public functions.
 - Configuration comes from environment variables. Commit `.env.example`; never commit
-  `.env` or any secret. `SECRET_KEY` must be required in production config.
+  `.env` or any secret. Production config must refuse to start unless both
+  `SECRET_KEY` and `DATABASE_URL` are set.
 - The SQLite database path comes from config and lives outside the repo checkout in
   production.
 - Every schema change ships with an Alembic migration in the same commit.

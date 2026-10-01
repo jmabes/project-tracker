@@ -1,0 +1,37 @@
+[project]
+name = "project-tracker"
+version = "0.1.0"
+description = "Self-hosted personal project tracker that replaces a spreadsheet."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+
+[tool.ruff]
+# target-version is inferred from requires-python.
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "ANN", # flake8-annotations: type hints on all functions
+    "D",   # pydocstyle: module and public function docstrings
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"migrations/**" = ["D"]
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = ["-ra"]
+strict = true
+filterwarnings = ["error"]
