@@ -74,7 +74,8 @@ def parse_csv(stream: IO[bytes]) -> list[list[Cell]]:
         text = stream.read().decode("utf-8-sig")
     except UnicodeDecodeError:
         raise ImportFileError(
-            "This CSV file isn't UTF-8 text. Save it as “CSV UTF-8” and try again."
+            "This CSV file isn't UTF-8 text. Save it again with UTF-8 as the "
+            "character set and try again."
         ) from None
     try:
         # newline="" so quoted fields may contain line breaks (see the csv docs).
