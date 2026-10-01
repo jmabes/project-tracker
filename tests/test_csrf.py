@@ -1,5 +1,7 @@
 """CSRF protection with it switched on (the testing config turns it off)."""
 
+import html
+import io
 import re
 from collections.abc import Iterator
 
@@ -121,3 +123,61 @@ def test_post_with_rendered_token_succeeds(
 
     assert response.status_code == 302
     assert names() == expected
+
+
+# --- spreadsheet import ----------------------------------------------------------
+
+CSV = (
+    b"name,category,medium,priority,status\r\nImported,Tech,Coding,High,In progress\r\n"
+)
+ROWS_RE = re.compile(r'name="rows" value="([^"]+)"')
+
+
+def upload_data(token: str | None = None) -> dict[str, object]:
+    data: dict[str, object] = {"file": (io.BytesIO(CSV), "p.csv")}
+    if token is not None:
+        data["csrf_token"] = token
+    return data
+
+
+def test_import_upload_without_token_is_rejected(client: FlaskClient) -> None:
+    response = client.post(
+        "/import/", data=upload_data(), content_type="multipart/form-data"
+    )
+
+    assert response.status_code == 400
+    assert "CSRF" in response.text
+
+
+def test_import_confirm_without_token_is_rejected(
+    app: Flask, client: FlaskClient
+) -> None:
+    rows = (
+        '[{"row": 2, "values": {"name": "Imported", "category": "Tech", '
+        '"medium": "Coding", "priority": "High", "status": "In progress"}}]'
+    )
+
+    response = client.post("/import/confirm", data={"rows": rows})
+
+    assert response.status_code == 400
+    assert names() == []
+
+
+def test_import_with_rendered_tokens_succeeds(app: Flask, client: FlaskClient) -> None:
+    token = token_from(client, "/import/")
+    preview = client.post(
+        "/import/", data=upload_data(token), content_type="multipart/form-data"
+    )
+    assert preview.status_code == 200
+    match = ROWS_RE.search(preview.text)
+    assert match
+    confirm_token = TOKEN_RE_ALT.search(preview.text)
+    assert confirm_token
+
+    response = client.post(
+        "/import/confirm",
+        data={"rows": html.unescape(match.group(1)), "csrf_token": confirm_token[1]},
+    )
+
+    assert response.status_code == 302
+    assert names() == ["Imported"]

@@ -5,9 +5,10 @@ Each project has a name, category, medium, priority, status, and optional start 
 estimated completion dates. It is built for one user on a home server, reached over the
 LAN and Tailscale.
 
-> **Status:** Milestone 3 (project list). You can create, view, edit, and delete
-> projects in the browser, and filter and sort the main list. Spreadsheet import and
-> the deployment guide arrive in later milestones. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status:** Milestone 4 (spreadsheet import). You can create, view, edit, and
+> delete projects in the browser, filter and sort the main list, and import projects
+> from a .csv, .xlsx, or .ods spreadsheet. The deployment guide arrives in the next
+> milestone. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 Stack: Flask, SQLite (Flask-SQLAlchemy + Flask-Migrate), Flask-WTF, python-calamine,
 Gunicorn, pytest and ruff. The reasoning and versions are in
@@ -47,7 +48,7 @@ Run all three before every commit. CI runs the same checks on every pull request
 ```
 
 Each command should finish with no errors. pytest ends with a line like
-`377 passed in 4.38s`.
+`532 passed in 5.60s`.
 
 ## Running the development server
 
@@ -74,6 +75,7 @@ Open <http://127.0.0.1:5000/>. The pages are:
 | `/projects/<id>` | One project's details, with **Edit** and **Delete** links. |
 | `/projects/<id>/edit` | Change any field. To finish a project, set its status to Done or Abandoned; it stays in the tracker. |
 | `/projects/<id>/delete` | Asks for confirmation; only the **Delete project** button removes it, permanently. |
+| `/import/` | Import projects from a spreadsheet: upload, check the preview, then confirm. Also linked as **Import** in the header. See [Importing a spreadsheet](#importing-a-spreadsheet). |
 
 If a field is invalid the form is shown again with your values kept and the error
 under the field. Names must be unique ignoring case, so "Café" and "CAFÉ" count as
@@ -100,6 +102,80 @@ Example: `/?category=Tech&priority=High&sort=start_date&dir=asc`.
 
 The development server is for local use only. Production runs under Gunicorn and
 systemd; that guide arrives with the deployment milestone.
+
+## Importing a spreadsheet
+
+Open **Import** in the header, choose a file, and click **Preview import**. The
+preview lists every row with its outcome:
+
+- **Ready**: the row is valid and will be imported.
+- **Error**: the row has a problem (the messages say what). It is not imported.
+- **Skipped**: the name matches a project already in the tracker, or an earlier row
+  in the same file, ignoring case. Existing projects are never changed. Within the
+  file, the first row with a name is checked as usual and every later row with the
+  same name is skipped.
+
+Nothing is saved until you click **Import N projects**. All the Ready rows are then
+saved together: either all of them are saved or, if anything goes wrong, none are.
+If something changed after the preview (for example, you added a project with the
+same name in another tab), nothing is saved and you get a fresh preview to confirm.
+The uploaded file is read in memory and never kept.
+
+### File rules
+
+- **Formats:** `.csv`, `.xlsx` (Excel), and `.ods` (LibreOffice Calc). Anything
+  else is refused, including `.xlsm` and `.xls`. Uploads can be up to 2 MB; a bigger
+  file gets a "file is too large" page.
+- **Which sheet:** the first sheet of an .xlsx or .ods file. Blank rows are ignored.
+- **CSV encoding:** UTF-8, with or without a byte order mark. When saving a CSV
+  from Excel or LibreOffice Calc, choose UTF-8 as the character set.
+
+### Accepted headers
+
+The header row names the columns, in any order. It doesn't have to be row 1: the
+importer uses the first row that names all five required columns, and ignores
+anything above it, such as a title, notes, or blank rows. The preview says which row
+it used.
+
+| Header | Required | Values |
+| --- | --- | --- |
+| `name` | Yes | Text, at most 200 characters, unique ignoring case. A whole-number cell such as `1984` is read as the text "1984"; a decimal such as `3.5` is an error. |
+| `category` | Yes | Tech, Finance, Home |
+| `medium` | Yes | Coding, Hardware, Research, DIY |
+| `priority` | Yes | High, Medium, Low |
+| `status` | Yes | Not started, In progress, On hold, Done, Abandoned |
+| `start_date` | No | A date (see below), or blank |
+| `estimated_completion_date` | No | A date on or after the start date, or blank |
+
+- Header matching ignores case and spaces around the name, and a space can stand
+  for an underscore, so `Start Date`, `start date`, and `START_DATE` all work. No
+  other spellings (such as "Project" for `name`) are accepted.
+- If no row names all five required columns, the import stops and the message
+  points at the closest row and the columns it is missing. A missing date column
+  just means those dates are blank.
+- Any other column (for example `Notes`) is ignored; the preview lists ignored
+  columns.
+- Category, medium, priority, and status values match in any case and are saved in
+  the spelling above, so `tech` is saved as `Tech`.
+
+### Dates
+
+- Date cells from Excel or LibreOffice Calc. A date with a time keeps only the
+  date.
+- Text written as `YYYY-MM-DD`, for example `2026-03-15`. Other text such as
+  `15/03/2026` is an error, so the day and month can't be mixed up. In a CSV file,
+  dates are always text, so use `YYYY-MM-DD`.
+
+### Test fixtures
+
+The importer's test files live in `tests/fixtures/`. They are generated, not
+hand-edited; see [tests/fixtures/README.md](tests/fixtures/README.md). To regenerate
+them after changing the rows in `scripts/make_fixtures.py`:
+
+```bash
+.venv/bin/python scripts/make_fixtures.py   # rewrites tests/fixtures/projects.*
+.venv/bin/python -m pytest                  # check the tests still pass
+```
 
 ## Configuration
 

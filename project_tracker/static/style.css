@@ -33,6 +33,12 @@ a {
   color: #fff;
 }
 
+.site-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
 .site-name {
   font-weight: 700;
   text-decoration: none;
@@ -146,6 +152,30 @@ main.wide {
 
 .project-table .date {
   white-space: nowrap;
+}
+
+/* Import preview */
+.import-table .outcome {
+  min-width: 14rem;
+  font-weight: 600;
+}
+
+.row-messages {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-weight: normal;
+}
+
+.import-valid .outcome {
+  color: #1a7f37;
+}
+
+.import-invalid .outcome {
+  color: #c62828;
+}
+
+.import-skipped .outcome {
+  color: #6e7781;
 }
 
 /* Project detail */

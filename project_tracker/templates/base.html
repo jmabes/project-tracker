@@ -11,6 +11,7 @@
     <a class="site-name" href="{{ url_for('projects.index') }}">Project Tracker</a>
     <nav>
       <a href="{{ url_for('projects.new') }}">New project</a>
+      <a href="{{ url_for('imports.upload_form') }}">Import</a>
     </nav>
   </header>
   <main class="{% block main_class %}{% endblock %}">
