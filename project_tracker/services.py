@@ -1,7 +1,8 @@
-"""Project validation: the one place field rules are enforced.
+"""Project validation and writes: the one place field rules are enforced.
 
 Web forms and the spreadsheet importer both call ``validate_project`` so every
-project in the database has passed the same checks.
+project in the database has passed the same checks. All project writes go through
+``create_project``, ``update_project`` and ``delete_project``.
 """
 
 import re
@@ -10,12 +11,14 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from project_tracker import choices
 from project_tracker.extensions import db
 from project_tracker.models import NAME_MAX_LENGTH, Project
 
 ISO_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+NAME_TAKEN_MESSAGE = "A project with this name already exists."
 
 CHOICE_FIELDS: dict[str, tuple[str, ...]] = {
     "category": choices.CATEGORIES,
@@ -77,7 +80,7 @@ def validate_project(
     elif len(name) > NAME_MAX_LENGTH:
         fail("name", f"Name must be at most {NAME_MAX_LENGTH} characters.")
     elif _name_taken(name, exclude_id):
-        fail("name", "A project with this name already exists.")
+        fail("name", NAME_TAKEN_MESSAGE)
 
     cleaned_choices: dict[str, str] = {}
     for field, allowed in CHOICE_FIELDS.items():
@@ -115,6 +118,66 @@ def validate_project(
         estimated_completion_date=estimate,
         **cleaned_choices,
     )
+
+
+def create_project(raw: Mapping[str, object]) -> Project:
+    """Validate raw input and save it as a new project.
+
+    Raises:
+        ProjectValidationError: If validation fails or the name is already taken.
+    """
+    data = validate_project(raw)
+    project = Project(**_fields(data))
+    db.session.add(project)
+    _commit_or_name_error()
+    return project
+
+
+def update_project(project: Project, raw: Mapping[str, object]) -> Project:
+    """Validate raw input and save it over an existing project's fields.
+
+    The project may keep its own name. On failure nothing is changed.
+
+    Raises:
+        ProjectValidationError: If validation fails or the name is already taken.
+    """
+    data = validate_project(raw, exclude_id=project.id)
+    for field, value in _fields(data).items():
+        setattr(project, field, value)
+    _commit_or_name_error()
+    return project
+
+
+def delete_project(project: Project) -> None:
+    """Permanently delete a project."""
+    db.session.delete(project)
+    db.session.commit()
+
+
+def _fields(data: ProjectData) -> dict[str, object]:
+    """Return the cleaned values as model keyword arguments."""
+    return {
+        "name": data.name,
+        "category": data.category,
+        "medium": data.medium,
+        "priority": data.priority,
+        "status": data.status,
+        "start_date": data.start_date,
+        "estimated_completion_date": data.estimated_completion_date,
+    }
+
+
+def _commit_or_name_error() -> None:
+    """Commit, turning a unique-index violation into a name field error.
+
+    The only unique constraint on projects is the case-insensitive name index, which
+    backstops ``_name_taken`` if another write lands between the check and the commit.
+    """
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise ProjectValidationError({"name": [NAME_TAKEN_MESSAGE]}) from None
 
 
 class _NotText:

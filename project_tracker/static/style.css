@@ -1,0 +1,150 @@
+/* Minimal hand-written styles: readable on desktop and phone, no framework. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2328;
+  background: #f6f8fa;
+}
+
+a {
+  color: #0b5cad;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  background: #24292f;
+}
+
+.site-header a {
+  color: #fff;
+}
+
+.site-name {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+/* Flash messages */
+.flashes {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.flash {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #8fc59a;
+  border-radius: 4px;
+  background: #e6f4ea;
+}
+
+.flash-error {
+  border-color: #e5a0a0;
+  background: #fbeaea;
+}
+
+/* Project list and detail */
+.project-list {
+  padding-left: 1.25rem;
+}
+
+.project-list li {
+  margin-bottom: 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.fields dt {
+  font-weight: 600;
+}
+
+.fields dd {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* Forms */
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #8c959f;
+  border-radius: 4px;
+  font: inherit;
+  background: #fff;
+}
+
+.field.has-error input,
+.field.has-error select {
+  border-color: #c62828;
+}
+
+.field-errors {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  color: #c62828;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #1a7f37;
+  border-radius: 4px;
+  font: inherit;
+  color: #fff;
+  background: #1f883d;
+  cursor: pointer;
+}
+
+button.danger {
+  border-color: #a40e26;
+  background: #cf222e;
+}

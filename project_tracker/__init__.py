@@ -49,9 +49,10 @@ def create_app(
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-    from project_tracker import health
+    from project_tracker import health, projects
 
     app.register_blueprint(health.bp)
+    app.register_blueprint(projects.bp)
 
     # Import models so Flask-Migrate sees them in the metadata.
     from project_tracker import models  # noqa: F401

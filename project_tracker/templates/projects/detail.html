@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+  <h1>{{ project.name }}</h1>
+  <dl class="fields">
+    <dt>Category</dt><dd>{{ project.category }}</dd>
+    <dt>Medium</dt><dd>{{ project.medium }}</dd>
+    <dt>Priority</dt><dd>{{ project.priority }}</dd>
+    <dt>Status</dt><dd>{{ project.status }}</dd>
+    <dt>Start date</dt><dd>{{ project.start_date or "—" }}</dd>
+    <dt>Estimated completion</dt><dd>{{ project.estimated_completion_date or "—" }}</dd>
+  </dl>
+  <div class="actions">
+    <a href="{{ url_for('projects.edit', project_id=project.id) }}">Edit</a>
+    <a href="{{ url_for('projects.confirm_delete', project_id=project.id) }}">Delete</a>
+  </div>
+{% endblock %}
