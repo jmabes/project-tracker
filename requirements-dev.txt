@@ -1,3 +1,7 @@
 -r requirements.txt
 pytest==9.1.1
 ruff==0.16.10
+# Spreadsheet writers used only by scripts/make_fixtures.py to build test fixtures.
+# The app reads spreadsheets with python-calamine and never imports these.
+openpyxl==3.1.5
+odfpy==1.4.1
