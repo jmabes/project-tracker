@@ -18,6 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite, ruff configuration, and GitHub Actions CI running the quality gate on
   Python 3.12.
 - SessionStart hook that prepares `.venv` in Claude Code cloud sessions.
-- README and stack decision record (ADR 0001).
+- README, stack decision record (ADR 0001), and roadmap for Milestones 2–5.
 
 [Unreleased]: https://github.com/jmabes/project-tracker/commits/main
