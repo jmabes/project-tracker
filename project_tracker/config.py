@@ -8,6 +8,10 @@ import os
 
 CONFIG_ENV_VAR = "PROJECT_TRACKER_CONFIG"
 
+# Largest request body accepted, which caps spreadsheet uploads. A few hundred
+# projects is well under 100 KB.
+MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+
 
 class Config:
     """Settings shared by every environment."""
@@ -15,6 +19,8 @@ class Config:
     TESTING = False
     SECRET_KEY: str | None = None
     SQLALCHEMY_DATABASE_URI: str | None = None
+    # Flask answers bigger requests with 413 Request Entity Too Large.
+    MAX_CONTENT_LENGTH = MAX_UPLOAD_BYTES
 
 
 class DevelopmentConfig(Config):

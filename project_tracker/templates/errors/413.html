@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}File too large{% endblock %}
+
+{% block content %}
+  <h1>That file is too large</h1>
+  <p>Uploads can be up to {{ limit }}. A spreadsheet of a few hundred projects is
+    far smaller than that, so check that you chose the right file, or remove
+    unneeded sheets, images and columns before trying again.</p>
+  <p><a href="{{ url_for('imports.upload_form') }}">Back to import</a></p>
+{% endblock %}

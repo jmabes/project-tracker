@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Import projects{% endblock %}
+
+{% block content %}
+  <h1>Import projects</h1>
+  <p>Upload a spreadsheet to add several projects at once. You'll see a preview of
+    every row first; nothing is saved until you confirm.</p>
+
+  <form method="post" action="{{ url_for('imports.upload') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field{% if error %} has-error{% endif %}">
+      <label for="import-file">Spreadsheet ({{ extensions|join(', ') }}, up to {{ limit }})</label>
+      <input id="import-file" type="file" name="{{ file_field }}" accept="{{ accept }}" required
+        {%- if error %} aria-invalid="true" aria-describedby="import-file-errors"{% endif %}>
+      {% if error %}
+        <ul class="field-errors" id="import-file-errors">
+          <li>{{ error }}</li>
+        </ul>
+      {% endif %}
+    </div>
+    <div class="actions">
+      <button type="submit">Preview import</button>
+      <a href="{{ url_for('projects.index') }}">Cancel</a>
+    </div>
+  </form>
+
+  <h2>What the file needs</h2>
+  <ul>
+    <li>The first sheet is read. Its first non-blank row names the columns.</li>
+    <li>Required columns: {% for c in required_columns %}<code>{{ c }}</code>{{ ", " if not loop.last }}{% endfor %}.
+      Optional: {% for c in optional_columns %}<code>{{ c }}</code>{{ ", " if not loop.last }}{% endfor %}.
+      Case doesn't matter and a space can stand for an underscore, so
+      “Start Date” works. Other columns are ignored.</li>
+    <li>Dates can be date cells or text written as <code>YYYY-MM-DD</code>.</li>
+    <li>Rows named like an existing project, or like an earlier row in the file, are
+      skipped. Existing projects are never changed.</li>
+    <li>CSV files must be UTF-8 (in Excel or Calc, save as “CSV UTF-8”).</li>
+  </ul>
+{% endblock %}

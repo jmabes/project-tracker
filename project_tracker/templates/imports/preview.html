@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Import preview{% endblock %}
+
+{% block main_class %}wide{% endblock %}
+
+{% block content %}
+  <h1>Import preview</h1>
+  {% if notice %}
+    <p class="flash flash-error" role="alert">{{ notice }}</p>
+  {% endif %}
+  <p>
+    {% if filename %}<strong>{{ filename }}</strong>: {% endif %}
+    {{ preview.count("valid") }} ready to import,
+    {{ preview.count("invalid") }} with errors,
+    {{ preview.count("skipped") }} skipped (duplicate name).
+    Nothing has been saved yet.
+  </p>
+  {% if preview.ignored_columns %}
+    <p>Ignored columns: {{ preview.ignored_columns|join(", ") }}.</p>
+  {% endif %}
+
+  {% if payload %}
+    <form method="post" action="{{ url_for('imports.confirm') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="{{ rows_field }}" value="{{ payload }}">
+      <div class="actions">
+        {% set count = preview.count("valid") %}
+        <button type="submit">Import {{ count }} project{{ "" if count == 1 else "s" }}</button>
+        <a href="{{ url_for('imports.upload_form') }}">Cancel</a>
+      </div>
+      {% if preview.count("valid") != preview.rows|length %}
+        <p>Only the rows marked “Ready” are imported. To include the others, fix them
+          in the spreadsheet and upload it again.</p>
+      {% endif %}
+    </form>
+  {% else %}
+    <p>No rows can be imported. Fix the spreadsheet and
+      <a href="{{ url_for('imports.upload_form') }}">upload it again</a>.</p>
+  {% endif %}
+
+  <div class="table-wrap">
+    <table class="project-table import-table">
+      <thead>
+        <tr>
+          <th scope="col">Row</th>
+          <th scope="col">Outcome</th>
+          {% for column in columns %}
+            <th scope="col">{{ labels[column] }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview.rows %}
+          <tr class="import-{{ row.status }}">
+            <td>{{ row.number }}</td>
+            <td class="outcome">
+              {% if row.status == "valid" %}Ready
+              {% elif row.status == "skipped" %}Skipped
+              {% else %}Error{% endif %}
+              {% if row.messages %}
+                <ul class="row-messages">
+                  {% for message in row.messages %}
+                    <li>{{ message }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </td>
+            {% for column in columns %}
+              <td{% if column == "name" %} class="name"{% elif column.endswith("_date") %} class="date"{% endif %}>
+                {{- display_value(row.data|attr(column) if row.data else row.values[column]) -}}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

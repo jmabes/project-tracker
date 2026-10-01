@@ -52,9 +52,13 @@ def create_app(
     csrf.init_app(app)
 
     from project_tracker import health, projects
+    from project_tracker.importer import views as imports
 
     app.register_blueprint(health.bp)
     app.register_blueprint(projects.bp)
+    app.register_blueprint(imports.bp)
+    # App-wide: the size check can fire before any view runs (e.g. during CSRF).
+    app.register_error_handler(413, imports.request_entity_too_large)
 
     # Import models so Flask-Migrate sees them in the metadata.
     from project_tracker import models  # noqa: F401
