@@ -53,6 +53,9 @@ def create_app(
 
     app.register_blueprint(health.bp)
 
+    # Import models so Flask-Migrate sees them in the metadata.
+    from project_tracker import models  # noqa: F401
+
     return app
 
 
