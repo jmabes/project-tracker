@@ -5,9 +5,9 @@ Each project has a name, category, medium, priority, status, and optional start 
 estimated completion dates. It is built for one user on a home server, reached over the
 LAN and Tailscale.
 
-> **Status:** Milestone 1 (foundation). The data model, validation, and a `/healthz`
-> endpoint exist; the web UI, spreadsheet import, and deployment guide arrive in later
-> milestones. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status:** Milestone 2 (project pages). You can create, view, edit, and delete
+> projects in the browser. The sortable, filterable list, spreadsheet import, and
+> deployment guide arrive in later milestones. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 Stack: Flask, SQLite (Flask-SQLAlchemy + Flask-Migrate), Flask-WTF, python-calamine,
 Gunicorn, pytest and ruff. The reasoning and versions are in
@@ -62,6 +62,22 @@ Each command should finish with no errors. pytest ends with a line like
 Check it's running by opening <http://127.0.0.1:5000/healthz> or running
 `curl http://127.0.0.1:5000/healthz`. The response should contain `"status": "ok"`.
 Stop the server with Ctrl+C.
+
+## Using the app
+
+Open <http://127.0.0.1:5000/>. The pages are:
+
+| Page | What it does |
+| --- | --- |
+| `/` | Lists every project by name (temporary; Milestone 3 adds sorting and filtering). |
+| `/projects/new` | Form to add a project. Also linked as **New project** in the header. |
+| `/projects/<id>` | One project's details, with **Edit** and **Delete** links. |
+| `/projects/<id>/edit` | Change any field. To finish a project, set its status to Done or Abandoned; it stays in the tracker. |
+| `/projects/<id>/delete` | Asks for confirmation; only the **Delete project** button removes it, permanently. |
+
+If a field is invalid the form is shown again with your values kept and the error
+under the field. Names must be unique ignoring case, so "Café" and "CAFÉ" count as
+the same name.
 
 The development server is for local use only. Production runs under Gunicorn and
 systemd; that guide arrives with the deployment milestone.
