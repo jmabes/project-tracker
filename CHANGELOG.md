@@ -26,5 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `create_project`, `update_project`, and `delete_project` service functions; a
   database name clash is reported as a "name already exists" field error.
 - CSRF protection tests for every form POST.
+- Main project list at `/`: a table of every field, filters for category, medium,
+  priority, and status, and sorting by any column. Priority and status sort by
+  meaning, names ignoring case, and empty dates last. Filter and sort state lives in
+  the query string, so views can be bookmarked; invalid values are ignored.
+- Done and Abandoned projects are hidden from the list by default, with a one-click
+  **Show finished projects** link and an empty-state hint when they are hidden.
+- `casefold()` SQL function on SQLite connections so name sorting folds case the
+  same way the uniqueness check does.
+
+### Changed
+
+- The temporary name-only index is replaced by the project list.
 
 [Unreleased]: https://github.com/jmabes/project-tracker/commits/main
