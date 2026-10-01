@@ -8,6 +8,7 @@ cell becomes text (``1984.0`` becomes ``"1984"``).
 
 The preview page carries the valid rows to the confirm request in a hidden form
 field (see ``encode_rows``), so the server keeps no state between the two requests.
+docs/decisions/0002-import-preview-state.md explains why.
 """
 
 import json
