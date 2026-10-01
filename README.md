@@ -48,7 +48,7 @@ Run all three before every commit. CI runs the same checks on every pull request
 ```
 
 Each command should finish with no errors. pytest ends with a line like
-`517 passed in 5.59s`.
+`532 passed in 5.60s`.
 
 ## Running the development server
 
@@ -132,7 +132,10 @@ The uploaded file is read in memory and never kept.
 
 ### Accepted headers
 
-The first non-blank row must name the columns, in any order:
+The header row names the columns, in any order. It doesn't have to be row 1: the
+importer uses the first row that names all five required columns, and ignores
+anything above it, such as a title, notes, or blank rows. The preview says which row
+it used.
 
 | Header | Required | Values |
 | --- | --- | --- |
@@ -147,8 +150,9 @@ The first non-blank row must name the columns, in any order:
 - Header matching ignores case and spaces around the name, and a space can stand
   for an underscore, so `Start Date`, `start date`, and `START_DATE` all work. No
   other spellings (such as "Project" for `name`) are accepted.
-- A missing required column stops the import with a message listing what's
-  missing. A missing date column just means those dates are blank.
+- If no row names all five required columns, the import stops and the message
+  points at the closest row and the columns it is missing. A missing date column
+  just means those dates are blank.
 - Any other column (for example `Notes`) is ignored; the preview lists ignored
   columns.
 - Category, medium, priority, and status values match in any case and are saved in

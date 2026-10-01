@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   underscores. Category, medium, priority, and status match in any case and are
   saved canonically. Whole-number name cells are read as text. Dates can be native
   date cells or `YYYY-MM-DD` text.
+- The import finds the header row even when the sheet starts with a title or notes:
+  it uses the first row that names every required column and ignores the rows
+  above it, saying so on the preview.
 - Rows named like an existing project, or like an earlier row in the same file, are
   skipped and reported; existing projects are never overwritten.
 - 2 MB upload limit (`MAX_CONTENT_LENGTH`) with a friendly "file is too large" page.
