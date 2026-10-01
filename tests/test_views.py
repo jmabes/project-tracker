@@ -253,3 +253,163 @@ def test_create_rejects_duplicate_name_in_any_case(
     assert NAME_TAKEN_MESSAGE in response.text
     assert 'id="name-errors"' in response.text
     assert [p.name for p in all_projects()] == [existing]
+
+
+# --- edit -------------------------------------------------------------------
+
+
+def test_edit_form_is_filled_with_saved_values(app: Flask, client: FlaskClient) -> None:
+    project = make_project(
+        name="Home server",
+        category="Tech",
+        medium="Hardware",
+        priority="High",
+        status="On hold",
+        start_date="2026-03-01",
+        estimated_completion_date="2026-04-15",
+    )
+
+    response = client.get(f"/projects/{project.id}/edit")
+
+    assert response.status_code == 200
+    text = response.text
+    assert f'action="/projects/{project.id}/edit"' in text
+    assert 'value="Home server"' in text
+    for value in ("Tech", "Hardware", "High", "On hold"):
+        assert f'<option selected value="{value}">{value}</option>' in text
+    assert 'name="start_date" type="date" value="2026-03-01"' in text
+    assert 'name="estimated_completion_date" type="date" value="2026-04-15"' in text
+
+
+def test_detail_links_to_edit(app: Flask, client: FlaskClient) -> None:
+    project = make_project()
+
+    response = client.get(f"/projects/{project.id}")
+
+    assert f'href="/projects/{project.id}/edit"' in response.text
+
+
+def test_edit_saves_and_redirects_to_detail(app: Flask, client: FlaskClient) -> None:
+    project = make_project()
+
+    response = client.post(
+        f"/projects/{project.id}/edit",
+        data=form_data(
+            name="Build a bigger shed",
+            priority="High",
+            start_date="2026-06-01",
+        ),
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == f"/projects/{project.id}"
+    [saved] = all_projects()
+    assert saved.name == "Build a bigger shed"
+    assert saved.priority == "High"
+    assert saved.start_date is not None
+    assert saved.start_date.isoformat() == "2026-06-01"
+    page = client.get(response.headers["Location"])
+    assert "Saved “Build a bigger shed”." in page.text
+
+
+def test_edit_can_clear_optional_dates(app: Flask, client: FlaskClient) -> None:
+    project = make_project(start_date="2026-03-01")
+
+    client.post(f"/projects/{project.id}/edit", data=form_data(start_date=""))
+
+    [saved] = all_projects()
+    assert saved.start_date is None
+
+
+@pytest.mark.parametrize("new_name", ["Café", "CAFÉ", "  café  "])
+def test_edit_may_keep_its_own_name_in_any_case(
+    app: Flask, client: FlaskClient, new_name: str
+) -> None:
+    project = make_project(name="Café")
+
+    response = client.post(
+        f"/projects/{project.id}/edit", data=form_data(name=new_name)
+    )
+
+    assert response.status_code == 302
+    [saved] = all_projects()
+    assert saved.name == new_name.strip()
+
+
+@pytest.mark.parametrize("candidate", ["Café", "CAFÉ", "café"])
+def test_edit_rejects_another_projects_name(
+    app: Flask, client: FlaskClient, candidate: str
+) -> None:
+    make_project(name="Café")
+    project = make_project(name="Garage")
+
+    response = client.post(
+        f"/projects/{project.id}/edit", data=form_data(name=candidate)
+    )
+
+    assert response.status_code == 200
+    assert NAME_TAKEN_MESSAGE in response.text
+    assert 'id="name-errors"' in response.text
+    assert f'value="{candidate}"' in response.text
+    assert [p.name for p in all_projects()] == ["Café", "Garage"]
+
+
+def test_edit_invalid_input_rerenders_and_changes_nothing(
+    app: Flask, client: FlaskClient
+) -> None:
+    project = make_project(name="Build a shed", status="Not started")
+
+    response = client.post(
+        f"/projects/{project.id}/edit",
+        data=form_data(name="", status="Done", start_date="2026-13-01"),
+    )
+
+    assert response.status_code == 200
+    text = response.text
+    assert "Edit “Build a shed”" in text  # heading keeps the saved name
+    assert "Name is required." in text
+    assert 'id="start_date-errors"' in text
+    assert '<option selected value="Done">Done</option>' in text
+    assert 'value="2026-13-01"' in text
+    [saved] = all_projects()
+    assert saved.name == "Build a shed"
+    assert saved.status == "Not started"
+
+
+def test_edit_post_missing_fields_does_not_keep_saved_values(
+    app: Flask, client: FlaskClient
+) -> None:
+    project = make_project()
+
+    response = client.post(f"/projects/{project.id}/edit", data={"name": "Renamed"})
+
+    assert response.status_code == 200
+    assert "Status is required." in response.text
+    [saved] = all_projects()
+    assert saved.name == "Build a shed"
+
+
+@pytest.mark.parametrize("status", ["Done", "Abandoned"])
+def test_finishing_a_project_keeps_it_visible(
+    app: Flask, client: FlaskClient, status: str
+) -> None:
+    project = make_project(name="Build a shed", status="In progress")
+
+    response = client.post(
+        f"/projects/{project.id}/edit", data=form_data(status=status)
+    )
+
+    assert response.status_code == 302
+    [saved] = all_projects()
+    assert saved.status == status
+    detail = client.get(f"/projects/{project.id}")
+    assert detail.status_code == 200
+    assert "Build a shed" in detail.text
+    assert status in detail.text
+
+
+@pytest.mark.parametrize("method", ["get", "post"])
+def test_edit_unknown_id_is_404(client: FlaskClient, method: str) -> None:
+    response = getattr(client, method)("/projects/999/edit", data=form_data())
+
+    assert response.status_code == 404

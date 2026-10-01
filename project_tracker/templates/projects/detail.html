@@ -12,4 +12,7 @@
     <dt>Start date</dt><dd>{{ project.start_date or "—" }}</dd>
     <dt>Estimated completion</dt><dd>{{ project.estimated_completion_date or "—" }}</dd>
   </dl>
+  <div class="actions">
+    <a href="{{ url_for('projects.edit', project_id=project.id) }}">Edit</a>
+  </div>
 {% endblock %}

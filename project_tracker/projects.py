@@ -11,7 +11,11 @@ from werkzeug.wrappers import Response
 from project_tracker.extensions import db
 from project_tracker.forms import PROJECT_FIELDS, ProjectForm
 from project_tracker.models import Project
-from project_tracker.services import ProjectValidationError, create_project
+from project_tracker.services import (
+    ProjectValidationError,
+    create_project,
+    update_project,
+)
 
 bp = Blueprint("projects", __name__)
 
@@ -54,14 +58,61 @@ def create() -> Response | str:
     return redirect(url_for(".detail", project_id=project.id))
 
 
+@bp.get("/projects/<int:project_id>/edit")
+def edit(project_id: int) -> str:
+    """Show the edit form filled with the project's saved values."""
+    project = db.get_or_404(Project, project_id)
+    return _render_edit_form(project, ProjectForm(obj=project))
+
+
+@bp.post("/projects/<int:project_id>/edit")
+def update(project_id: int) -> Response | str:
+    """Save changes to a project, or re-render the form with per-field errors."""
+    project = db.get_or_404(Project, project_id)
+    # Built from the request only: with obj=project, a field missing from the POST
+    # would silently keep its saved value instead of failing validation.
+    form = ProjectForm()
+    try:
+        update_project(project, form.raw_input())
+    except ProjectValidationError as exc:
+        form.add_errors(exc.errors)
+        return _render_edit_form(project, form)
+    flash(f"Saved “{project.name}”.")
+    return redirect(url_for(".detail", project_id=project.id))
+
+
 def _render_create_form(form: ProjectForm) -> str:
     """Render the form used to create a project."""
-    return render_template(
-        "projects/form.html",
-        form=form,
-        field_names=PROJECT_FIELDS,
+    return _render_form(
+        form,
         heading="New project",
         action=url_for(".create"),
         submit_label="Create project",
         cancel_url=url_for(".index"),
+    )
+
+
+def _render_edit_form(project: Project, form: ProjectForm) -> str:
+    """Render the form used to edit a project."""
+    return _render_form(
+        form,
+        heading=f"Edit “{project.name}”",
+        action=url_for(".update", project_id=project.id),
+        submit_label="Save changes",
+        cancel_url=url_for(".detail", project_id=project.id),
+    )
+
+
+def _render_form(
+    form: ProjectForm, *, heading: str, action: str, submit_label: str, cancel_url: str
+) -> str:
+    """Render the shared project form page."""
+    return render_template(
+        "projects/form.html",
+        form=form,
+        field_names=PROJECT_FIELDS,
+        heading=heading,
+        action=action,
+        submit_label=submit_label,
+        cancel_url=cancel_url,
     )
