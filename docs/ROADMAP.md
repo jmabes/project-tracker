@@ -127,6 +127,13 @@ Scope
    YYYY-MM-DD text and native date cells from Excel and Calc. Rows whose name
    matches an existing project (case-insensitive) are skipped and reported, never
    overwritten. Also detect duplicate names within the same file.
+   Before writing code, ask me about two decisions left open in Milestone 1:
+   - Choice matching: validate_project currently requires exact spelling for
+     category, medium, priority and status ("tech" is rejected). Should the import
+     accept any capitalisation and store the canonical value ("tech" → "Tech")?
+   - All-number names: calamine returns a numeric cell such as 1984 as the float
+     1984.0, which validate_project rejects with "Name must be text.". Should the
+     importer convert whole numbers to text ("1984") before validation?
 5. Flow: upload → preview table showing each row's result (valid / error messages /
    skipped as duplicate) → confirm → write all valid rows in a single transaction.
    Nothing is written before confirmation. Decide how preview state survives between
@@ -185,6 +192,9 @@ Scope
    by a way to verify it worked (e.g. `systemctl status`, `curl .../healthz`).
 5. Reachable only on the LAN and tailnet. No authentication exists, so never
    document port forwarding or Tailscale Funnel.
+6. Extend GET /healthz to run a trivial database query and return 503 if it fails,
+   so the deployment's verify step also catches a wrong DATABASE_URL or file
+   permissions (decided in the Milestone 1 review). Test both outcomes.
 
 Out of scope
 Reverse proxy/TLS (propose under Follow-ups), authentication, new app features.
@@ -192,6 +202,7 @@ Reverse proxy/TLS (propose under Follow-ups), authentication, new app features.
 Acceptance criteria
 ☐ Following docs/deployment.md on a fresh Ubuntu 24.04 box results in
   `curl http://<server>:<port>/healthz` returning 200 from another LAN machine.
+☐ /healthz returns 503 when the database can't be reached (tested).
 ☐ The service runs as the dedicated user, restarts on failure, and starts at boot.
 ☐ The database lives outside the repo checkout and survives an update.
 ☐ Backup, restore, and rollback steps are tested at least once in the session's
