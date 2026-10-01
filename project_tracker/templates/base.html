@@ -10,7 +10,7 @@
   <header class="site-header">
     <a class="site-name" href="{{ url_for('projects.index') }}">Project Tracker</a>
     <nav>
-      {% block nav %}{% endblock %}
+      <a href="{{ url_for('projects.new') }}">New project</a>
     </nav>
   </header>
   <main>

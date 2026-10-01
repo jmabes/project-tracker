@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% macro render_field(field) %}
+  <div class="field{% if field.errors %} has-error{% endif %}">
+    {{ field.label }}
+    {% if field.errors %}
+      {{ field(aria_invalid="true", aria_describedby=field.id ~ "-errors") }}
+      <ul class="field-errors" id="{{ field.id }}-errors">
+        {% for error in field.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      {{ field() }}
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% block title %}{{ heading }}{% endblock %}
+
+{% block content %}
+  <h1>{{ heading }}</h1>
+  <form method="post" action="{{ action }}" novalidate>
+    {{ form.csrf_token }}
+    {% for name in field_names %}
+      {{ render_field(form[name]) }}
+    {% endfor %}
+    <div class="actions">
+      <button type="submit">{{ submit_label }}</button>
+      <a href="{{ cancel_url }}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}
