@@ -22,7 +22,7 @@ from project_tracker.services import create_project
 FIXTURES = Path(__file__).parent / "fixtures"
 FIXTURE_FILES = ["projects.csv", "projects-bom.csv", "projects.xlsx", "projects.ods"]
 ROWS_RE = re.compile(r'name="rows" value="([^"]*)"')
-HEADER = "Name,Category,Medium,Priority,Status,Start date,Estimated completion date\r\n"
+HEADER = "Name,Category,Medium,Priority,Status,Start date,Target date\r\n"
 
 
 def make_project(name: str) -> Project:
@@ -99,7 +99,7 @@ def test_upload_page(client: FlaskClient) -> None:
     assert 'enctype="multipart/form-data"' in page_text(response)
     assert 'accept=".csv,.xlsx,.ods"' in page_text(response)
     assert "up to 2 MB" in page_text(response)
-    assert "<code>estimated_completion_date</code>" in page_text(response)
+    assert "<code>target_date</code>" in page_text(response)
 
 
 def test_header_links_to_import(client: FlaskClient) -> None:
@@ -250,7 +250,7 @@ def test_confirm_writes_every_valid_row(
         "In progress",
     )
     assert rebuild.start_date == date(2026, 1, 10)
-    assert rebuild.estimated_completion_date == date(2026, 6, 30)
+    assert rebuild.target_date == date(2026, 6, 30)
     budget = projects["Budget review"]
     assert (budget.category, budget.medium, budget.priority, budget.status) == (
         "Finance",

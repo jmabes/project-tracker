@@ -1,4 +1,4 @@
-Name, category ,MEDIUM,Priority,Status,Start Date,estimated_completion_date,Notes
+Name, category ,MEDIUM,Priority,Status,Start Date,target_date,Notes
 Home server rebuild,Tech,Hardware,High,In progress,2026-01-10,2026-06-30,ignored column
 Budget review,finance,research,LOW,not started,2026-02-01
 1984,Home,DIY,Medium,Done,,

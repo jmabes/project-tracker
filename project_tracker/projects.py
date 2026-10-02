@@ -36,7 +36,7 @@ COLUMN_LABELS: dict[str, str] = {
     "priority": "Priority",
     "status": "Status",
     "start_date": "Start date",
-    "estimated_completion_date": "Estimated completion",
+    "target_date": "Target date",
 }
 
 
