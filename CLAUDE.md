@@ -5,6 +5,10 @@ Ubuntu server, reached over the LAN and Tailscale. Developed in Claude Code clou
 (one session → one branch → one PR). The owner deploys by cloning this public repo onto
 the server.
 
+**Start here:** read `docs/ARCHITECTURE.md` before opening source files. It maps every
+module, route, invariant and recipe, so you only need to read the files your change
+touches. Update it in the same PR when you change any of those.
+
 ## Ground rules
 
 - **Documentation first.** Before using any library, framework, CLI, or config syntax,
