@@ -5,10 +5,10 @@ Each project has a name, category, medium, priority, status, and optional start 
 estimated completion dates. It is built for one user on a home server, reached over the
 LAN and Tailscale.
 
-> **Status:** Milestone 4 (spreadsheet import). You can create, view, edit, and
-> delete projects in the browser, filter and sort the main list, and import projects
-> from a .csv, .xlsx, or .ods spreadsheet. The deployment guide arrives in the next
-> milestone. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status:** Milestone 5 (deployment). You can create, view, edit, and delete
+> projects in the browser, filter and sort the main list, and import projects from a
+> .csv, .xlsx, or .ods spreadsheet. [docs/deployment.md](docs/deployment.md) explains
+> how to run it on the home server. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 Stack: Flask, SQLite (Flask-SQLAlchemy + Flask-Migrate), Flask-WTF, python-calamine,
 Gunicorn, pytest and ruff. The reasoning and versions are in
@@ -62,7 +62,9 @@ Each command should finish with no errors. pytest ends with a line like
 
 Check it's running by opening <http://127.0.0.1:5000/healthz> or running
 `curl http://127.0.0.1:5000/healthz`. The response should contain `"status": "ok"`.
-Stop the server with Ctrl+C.
+`/healthz` also reads the database, so it answers 503 with
+`"database": "unavailable"` if the database can't be opened or `flask db upgrade`
+hasn't been run. Stop the server with Ctrl+C.
 
 ## Using the app
 
@@ -101,7 +103,7 @@ ignoring case. Projects without a date always sort after those with one.
 Example: `/?category=Tech&priority=High&sort=start_date&dir=asc`.
 
 The development server is for local use only. Production runs under Gunicorn and
-systemd; that guide arrives with the deployment milestone.
+systemd; see [docs/deployment.md](docs/deployment.md).
 
 ## Importing a spreadsheet
 
@@ -186,6 +188,8 @@ Settings come from environment variables; [.env.example](.env.example) lists the
 | `PROJECT_TRACKER_CONFIG` | `development`, `production`, or `testing` | `development` |
 | `SECRET_KEY` | Signs sessions and CSRF tokens. **Required in production.** | insecure dev key |
 | `DATABASE_URL` | SQLAlchemy URL for the SQLite file. **Required in production** (keep the file outside the repo). | `instance/project_tracker.db` |
+| `PROJECT_TRACKER_HOST` | Address Gunicorn listens on (read by `gunicorn.conf.py`). The server uses `0.0.0.0`. | `127.0.0.1` |
+| `PROJECT_TRACKER_PORT` | Port Gunicorn listens on. | `8002` |
 
 The app does not read a `.env` file by itself. To set a variable for one command, put
 it in front, for example:
