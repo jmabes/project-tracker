@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deploy/project-tracker.service` that runs Gunicorn as the `project-tracker`
   system user, and `docs/deployment.md` covering install, update, backup and
   restore, rollback, and logs.
+- `docs/ARCHITECTURE.md`: a condensed codebase map for agents and contributors
+  (modules, layering rules, routes, data flow, recipes, open follow-ups), linked from
+  the top of `CLAUDE.md`.
 
 ### Changed
 
