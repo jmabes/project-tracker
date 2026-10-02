@@ -22,7 +22,7 @@ PROJECT_FIELDS = (
     "priority",
     "status",
     "start_date",
-    "estimated_completion_date",
+    "target_date",
 )
 
 
@@ -40,9 +40,7 @@ class ProjectForm(FlaskForm):
     priority = SelectField("Priority", choices=_options(choices.PRIORITIES))
     status = SelectField("Status", choices=_options(choices.STATUSES))
     start_date = StringField("Start date", render_kw=DATE_INPUT)
-    estimated_completion_date = StringField(
-        "Estimated completion date", render_kw=DATE_INPUT
-    )
+    target_date = StringField("Target date", render_kw=DATE_INPUT)
 
     def raw_input(self) -> dict[str, object]:
         """Return the submitted values, unvalidated, keyed by field name."""

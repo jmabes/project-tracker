@@ -23,7 +23,7 @@ def valid_input(**overrides: object) -> dict[str, object]:
         "priority": "Medium",
         "status": "Not started",
         "start_date": None,
-        "estimated_completion_date": None,
+        "target_date": None,
     }
     raw.update(overrides)
     return raw
@@ -55,7 +55,7 @@ def test_valid_input_returns_cleaned_data(app: Flask) -> None:
             name="  Build a shed  ",
             category=" Home ",
             start_date="2026-03-01",
-            estimated_completion_date="2026-04-01",
+            target_date="2026-04-01",
         )
     )
 
@@ -66,18 +66,18 @@ def test_valid_input_returns_cleaned_data(app: Flask) -> None:
         priority="Medium",
         status="Not started",
         start_date=date(2026, 3, 1),
-        estimated_completion_date=date(2026, 4, 1),
+        target_date=date(2026, 4, 1),
     )
 
 
 def test_optional_dates_may_be_omitted_entirely(app: Flask) -> None:
     raw = valid_input()
-    del raw["start_date"], raw["estimated_completion_date"]
+    del raw["start_date"], raw["target_date"]
 
     data = validate_project(raw)
 
     assert data.start_date is None
-    assert data.estimated_completion_date is None
+    assert data.target_date is None
 
 
 # --- required fields --------------------------------------------------------
@@ -115,11 +115,11 @@ def test_all_errors_reported_together(app: Flask) -> None:
             name="",
             category="Garden",
             start_date="2026-05-01",
-            estimated_completion_date="2026-04-01",
+            target_date="2026-04-01",
         )
     )
 
-    assert set(errors) == {"name", "category", "estimated_completion_date"}
+    assert set(errors) == {"name", "category", "target_date"}
 
 
 # --- name -------------------------------------------------------------------
@@ -255,7 +255,7 @@ def test_allowed_values_match_the_domain_model() -> None:
         ("  ", None),
     ],
 )
-@pytest.mark.parametrize("field", ["start_date", "estimated_completion_date"])
+@pytest.mark.parametrize("field", ["start_date", "target_date"])
 def test_accepted_date_inputs(
     app: Flask, field: str, value: object, expected: date | None
 ) -> None:
@@ -268,7 +268,7 @@ def test_accepted_date_inputs(
     "value",
     ["2026/03/01", "01/03/2026", "20260301", "2026-3-1", "2026-02-30", "soon", 45000],
 )
-@pytest.mark.parametrize("field", ["start_date", "estimated_completion_date"])
+@pytest.mark.parametrize("field", ["start_date", "target_date"])
 def test_rejected_date_inputs(app: Flask, field: str, value: object) -> None:
     errors = errors_for(valid_input(**{field: value}))
 
@@ -279,41 +279,37 @@ def test_rejected_date_inputs(app: Flask, field: str, value: object) -> None:
 # --- date order -------------------------------------------------------------
 
 
-def test_estimate_before_start_is_rejected(app: Flask) -> None:
-    errors = errors_for(
-        valid_input(start_date="2026-05-02", estimated_completion_date="2026-05-01")
-    )
+def test_target_before_start_is_rejected(app: Flask) -> None:
+    errors = errors_for(valid_input(start_date="2026-05-02", target_date="2026-05-01"))
 
     assert errors == {
-        "estimated_completion_date": [
-            "Estimated completion date must be on or after the start date."
-        ]
+        "target_date": ["Target date must be on or after the start date."]
     }
 
 
-def test_estimate_on_start_date_is_accepted(app: Flask) -> None:
+def test_target_on_start_date_is_accepted(app: Flask) -> None:
     data = validate_project(
-        valid_input(start_date="2026-05-01", estimated_completion_date="2026-05-01")
+        valid_input(start_date="2026-05-01", target_date="2026-05-01")
     )
 
-    assert data.start_date == data.estimated_completion_date == date(2026, 5, 1)
+    assert data.start_date == data.target_date == date(2026, 5, 1)
 
 
 @pytest.mark.parametrize(
-    ("start", "estimate"), [("2026-05-01", None), (None, "2026-05-01")]
+    ("start", "target"), [("2026-05-01", None), (None, "2026-05-01")]
 )
 def test_date_order_not_checked_when_one_date_missing(
-    app: Flask, start: str | None, estimate: str | None
+    app: Flask, start: str | None, target: str | None
 ) -> None:
-    validate_project(valid_input(start_date=start, estimated_completion_date=estimate))
+    validate_project(valid_input(start_date=start, target_date=target))
 
 
 def test_date_order_compares_mixed_input_types(app: Flask) -> None:
     errors = errors_for(
         valid_input(
             start_date=datetime(2026, 5, 2, 9, 0),
-            estimated_completion_date="2026-05-01",
+            target_date="2026-05-01",
         )
     )
 
-    assert "estimated_completion_date" in errors
+    assert "target_date" in errors

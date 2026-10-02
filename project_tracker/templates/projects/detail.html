@@ -10,7 +10,7 @@
     <dt>Priority</dt><dd>{{ project.priority }}</dd>
     <dt>Status</dt><dd>{{ project.status }}</dd>
     <dt>Start date</dt><dd>{{ project.start_date or "—" }}</dd>
-    <dt>Estimated completion</dt><dd>{{ project.estimated_completion_date or "—" }}</dd>
+    <dt>Target date</dt><dd>{{ project.target_date or "—" }}</dd>
   </dl>
   <div class="actions">
     <a href="{{ url_for('projects.edit', project_id=project.id) }}">Edit</a>

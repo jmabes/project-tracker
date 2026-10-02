@@ -31,7 +31,7 @@ class Project(db.Model):
     priority: Mapped[str] = mapped_column(String(50))
     status: Mapped[str] = mapped_column(String(50))
     start_date: Mapped[date | None]
-    estimated_completion_date: Mapped[date | None]
+    target_date: Mapped[date | None]
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=utcnow, onupdate=utcnow)
 

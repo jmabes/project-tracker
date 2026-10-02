@@ -278,16 +278,12 @@ def test_name_sort_folds_non_ascii_case_like_uniqueness(app: Flask) -> None:
     assert names(ListOptions(sort="name")) == ["éa project", "ÉZ project"]
 
 
-@pytest.mark.parametrize("field", ["start_date", "estimated_completion_date"])
+@pytest.mark.parametrize("field", ["start_date", "target_date"])
 def test_dates_sort_with_empty_dates_last_both_ways(app: Flask, field: str) -> None:
     make("empty one")
-    make(
-        "late", start_date=date(2026, 1, 1), estimated_completion_date=date(2026, 9, 1)
-    )
+    make("late", start_date=date(2026, 1, 1), target_date=date(2026, 9, 1))
     make("empty two")
-    make(
-        "early", start_date=date(2025, 1, 1), estimated_completion_date=date(2025, 9, 1)
-    )
+    make("early", start_date=date(2025, 1, 1), target_date=date(2025, 9, 1))
 
     options = ListOptions(sort=field)
 

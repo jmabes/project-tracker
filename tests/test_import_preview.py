@@ -41,7 +41,7 @@ def row(number: int = 2, **overrides: Cell | None) -> SourceRow:
         "priority": "Medium",
         "status": "Not started",
         "start_date": None,
-        "estimated_completion_date": None,
+        "target_date": None,
     }
     values.update(overrides)
     return SourceRow(number=number, values=values)
@@ -74,8 +74,8 @@ def preview_fixture(name: str) -> Preview:
         ("  STATUS  ", "status"),
         ("Start Date", "start_date"),
         ("start_date", "start_date"),
-        ("Estimated  Completion\tDate", "estimated_completion_date"),
-        ("estimated _ completion date", "estimated_completion_date"),
+        ("Target  \tDate", "target_date"),
+        ("target _ date", "target_date"),
         ("", ""),
     ],
 )
@@ -140,7 +140,7 @@ def test_source_rows_fill_missing_columns_and_short_rows_with_none() -> None:
         "priority": None,
         "status": None,
         "start_date": None,
-        "estimated_completion_date": None,
+        "target_date": None,
     }
 
 
@@ -169,7 +169,7 @@ def test_fixture_preview_outcomes(app: Flask, name: str) -> None:
         5: ("invalid", ["Category must be one of: Tech, Finance, Home."]),
         6: (
             "invalid",
-            ["Estimated completion date must be on or after the start date."],
+            ["Target date must be on or after the start date."],
         ),
         8: ("skipped", ["Same name as row 2 in this file."]),
         9: ("skipped", ["A project named “Garage shelves” already exists."]),
@@ -189,7 +189,7 @@ def test_fixture_valid_rows_are_cleaned(app: Flask, name: str) -> None:
     ]
     first, second, third = data
     assert first and first.start_date == date(2026, 1, 10)
-    assert first.estimated_completion_date == date(2026, 6, 30)
+    assert first.target_date == date(2026, 6, 30)
     assert second and (
         second.category,
         second.medium,
@@ -248,13 +248,13 @@ def test_native_dates_and_iso_text(app: Flask) -> None:
         [
             row(
                 start_date=datetime(2026, 3, 1, 9, 30),
-                estimated_completion_date="2026-04-01",
+                target_date="2026-04-01",
             )
         ]
     ).rows
     assert result.data
     assert result.data.start_date == date(2026, 3, 1)
-    assert result.data.estimated_completion_date == date(2026, 4, 1)
+    assert result.data.target_date == date(2026, 4, 1)
 
 
 def test_invalid_row_lists_every_error_in_column_order(app: Flask) -> None:
@@ -349,9 +349,7 @@ def test_encode_rows_holds_only_valid_rows_with_iso_dates(app: Flask) -> None:
 
 
 def test_encode_then_decode_round_trip(app: Flask) -> None:
-    preview = build_preview(
-        [row(5, name="Café", estimated_completion_date=datetime(2026, 2, 3))]
-    )
+    preview = build_preview([row(5, name="Café", target_date=datetime(2026, 2, 3))])
     rows = decode_rows(encode_rows(preview))
     assert [r.number for r in rows] == [5]
     assert set(rows[0].values) == set(COLUMNS)

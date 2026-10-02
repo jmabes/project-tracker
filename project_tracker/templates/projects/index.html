@@ -72,7 +72,7 @@
               <td>{{ project.priority }}</td>
               <td>{{ project.status }}</td>
               <td class="date">{{ project.start_date or "—" }}</td>
-              <td class="date">{{ project.estimated_completion_date or "—" }}</td>
+              <td class="date">{{ project.target_date or "—" }}</td>
             </tr>
           {% endfor %}
         </tbody>

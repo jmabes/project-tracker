@@ -2,7 +2,7 @@
 
 A small self-hosted web app that replaces a spreadsheet for tracking personal projects.
 Each project has a name, category, medium, priority, status, and optional start and
-estimated completion dates. It is built for one user on a home server, reached over the
+target dates. It is built for one user on a home server, reached over the
 LAN and Tailscale.
 
 > **Status:** Milestone 4 (spreadsheet import). You can create, view, edit, and
@@ -48,7 +48,7 @@ Run all three before every commit. CI runs the same checks on every pull request
 ```
 
 Each command should finish with no errors. pytest ends with a line like
-`532 passed in 5.60s`.
+`533 passed in 5.63s`.
 
 ## Running the development server
 
@@ -92,7 +92,7 @@ is ignored and the default is used:
 | --- | --- | --- |
 | `category`, `medium`, `priority`, `status` | One allowed value each (as shown in the filter menus). Filters combine: a project must match all of them. | Any |
 | `show_finished` | `1` to include Done and Abandoned projects. Choosing Done or Abandoned as the `status` filter shows them too. | Hidden |
-| `sort` | `name`, `category`, `medium`, `priority`, `status`, `start_date`, `estimated_completion_date` | `priority` |
+| `sort` | `name`, `category`, `medium`, `priority`, `status`, `start_date`, `target_date` | `priority` |
 | `dir` | `asc` or `desc` | `desc` (High first) for priority, `asc` for the rest |
 
 Priority sorts by importance (High, Medium, Low) and status in workflow order
@@ -145,7 +145,7 @@ it used.
 | `priority` | Yes | High, Medium, Low |
 | `status` | Yes | Not started, In progress, On hold, Done, Abandoned |
 | `start_date` | No | A date (see below), or blank |
-| `estimated_completion_date` | No | A date on or after the start date, or blank |
+| `target_date` | No | A date on or after the start date, or blank |
 
 - Header matching ignores case and spaces around the name, and a space can stand
   for an underscore, so `Start Date`, `start date`, and `START_DATE` all work. No

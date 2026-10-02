@@ -54,16 +54,16 @@ def mixed(app: Flask) -> list[Project]:
     return [
         make("Alpha", category="Tech", medium="Coding", priority="Low",
              status="In progress", start_date=date(2026, 3, 1),
-             estimated_completion_date=date(2026, 12, 1)),
+             target_date=date(2026, 12, 1)),
         make("bravo", category="Finance", medium="Research", priority="High",
              status="Not started"),
         make("Charlie", category="Home", medium="Hardware", priority="Medium",
              status="On hold", start_date=date(2025, 1, 1),
-             estimated_completion_date=date(2025, 6, 1)),
+             target_date=date(2025, 6, 1)),
         make("delta", category="Tech", medium="DIY", priority="High",
              status="Done", start_date=date(2024, 5, 5)),
         make("Echo", category="Home", medium="Coding", priority="Low",
-             status="Abandoned", estimated_completion_date=date(2027, 1, 1)),
+             status="Abandoned", target_date=date(2027, 1, 1)),
     ]  # fmt: skip
 
 
@@ -88,7 +88,7 @@ def test_table_shows_every_column_and_links_names_to_detail(
     text = client.get("/").text
 
     for label in ("Name", "Category", "Medium", "Priority", "Status", "Start date",
-                  "Estimated completion"):  # fmt: skip
+                  "Target date"):  # fmt: skip
         assert f">{label}" in text
     row = text[text.index(f'href="/projects/{alpha.id}"') :].split("</tr>")[0]
     for value in ("Alpha", "Tech", "Coding", "Low", "In progress", "2026-03-01",
