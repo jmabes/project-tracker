@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %} · Project Tracker</title>
+  {# Home-screen web app. iOS reads name, display, start_url and theme_color from the
+     manifest, but uses apple-touch-icon in preference to manifest icons and takes the
+     home-screen label from apple-mobile-web-app-title (else <title>). #}
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <meta name="apple-mobile-web-app-title" content="Projects">
+  <meta name="theme-color" content="#f9f9fb">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>

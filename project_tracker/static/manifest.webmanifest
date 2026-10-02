@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "Project Tracker",
+  "short_name": "Projects",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#f9f9fb",
+  "background_color": "#f2f2f7",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
