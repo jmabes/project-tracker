@@ -7,8 +7,8 @@ what exists. If they disagree, `CLAUDE.md` wins and this file needs fixing.
 
 > **Keep it current.** A PR that adds, renames or moves a module, route, config key,
 > table column, or cross-cutting convention updates this file in the same PR.
-> Last checked against `main` at commit `bb56294` (Milestone 5 merged), when the suite
-> was `545 passed`.
+> Last checked on the `claude/ios-home-screen-styling` branch (iOS home-screen styling,
+> on top of `main` at `a007c68`), when the suite was `580 passed`.
 
 ## 1. Status
 
@@ -16,6 +16,8 @@ what exists. If they disagree, `CLAUDE.md` wins and this file needs fixing.
   Ubuntu 24.04 server (systemd + Gunicorn, port 8002, LAN and tailnet only, no auth).
 - Features: project CRUD, filterable/sortable list with finished projects hidden by
   default, spreadsheet import (.csv/.xlsx/.ods) with preview and confirm, `/healthz`.
+- Styled phone first as an iOS Home Screen web app (manifest, touch icon, safe
+  areas, bottom tab bar, cards on phones, dark mode). See §9.
 - There is no milestone in progress. New work comes as one task per session/branch/PR.
 - `docs/ROADMAP.md` holds the original Milestone 2–5 prompts. It is a historical record;
   its "only Milestone 1 is done" intro is stale.
@@ -40,11 +42,14 @@ About 2,700 lines of app code, templates, config, migrations and scripts; the re
 | `project_tracker/importer/confirm.py` | 37 | `save_rows()`: re-check rows, then `services.create_projects` in one transaction. |
 | `project_tracker/importer/views.py` | 131 | `imports` blueprint (`/import`): upload form, upload→preview, confirm. 413 handler. |
 | `project_tracker/templates/` | — | Jinja: `base.html`, `projects/{index,detail,form,delete}.html`, `imports/{upload,preview}.html`, `errors/413.html`. |
-| `project_tracker/static/style.css` | 251 | Hand-written CSS, no framework, no JavaScript anywhere. |
+| `project_tracker/static/style.css` | 1176 | Hand-written CSS, no framework, no JavaScript anywhere. Colour tokens on `:root`, dark overrides, phone layout below 48rem. See §9. |
+| `project_tracker/static/manifest.webmanifest` | 17 | Web app manifest: name, short name "Projects", `standalone`, `start_url`/`scope`/`id` `/`, light theme colour, icon. Served as `application/manifest+json`. |
+| `project_tracker/static/apple-touch-icon.png` | — | 180×180 opaque home-screen icon. **Generated** by `scripts/make_icon.py`; a test checks the file matches. |
 | `migrations/` | — | Flask-Migrate/Alembic. `env.py` is lightly edited (type hints, `db.engine`). Two revisions, see §7. |
-| `tests/` | — | pytest, 545 tests. `conftest.py` + one file per area; `fixtures/` holds generated spreadsheets. See §9. |
+| `tests/` | — | pytest, 580 tests. `conftest.py` + one file per area; `fixtures/` holds generated spreadsheets. See §9. |
 | `scripts/cloud-setup.sh` | 30 | SessionStart hook: builds `.venv` in cloud sessions only; skips pip if requirements are unchanged. |
 | `scripts/make_fixtures.py` | 177 | Regenerates `tests/fixtures/*` (uses dev-only openpyxl + odfpy). |
+| `scripts/make_icon.py` | 113 | Draws the home-screen icon with the standard library only (`zlib`, `struct`). Deterministic. |
 | `gunicorn.conf.py` | 41 | Bind from `PROJECT_TRACKER_HOST`/`PORT` (default `127.0.0.1:8002`), 2 sync workers, logs to stdout. |
 | `deploy/project-tracker.service` | 64 | Sandboxed systemd unit (`Type=notify`, `StateDirectory=project-tracker`, `ProtectSystem=strict`). |
 | `docs/deployment.md` | 571 | Owner-facing server guide: install, update, backup/restore, rollback, logs. |
@@ -230,8 +235,54 @@ Template conventions:
   Failed POSTs re-render with status 200.
 - Unknown ids use `db.get_or_404`.
 - Accessibility: invalid fields get `aria-invalid` and `aria-describedby` pointing to
-  an error list; the list headers use `aria-sort`.
+  an error list; the list headers use `aria-sort`; the main nav marks the current
+  section with `aria-current="page"`. Decorative SVG icons are `aria-hidden`.
 - 404 and CSRF-failure pages are still Flask's plain defaults.
+
+Home-screen web app (`base.html` head):
+
+- `<link rel="manifest">` and the manifest carry the app's identity. Per MDN
+  browser-compat-data, iOS Safari reads `name`, `short_name`, `display`
+  (`standalone` only), `start_url`, `scope`, `id` and `theme_color` from it, and
+  ignores `background_color`.
+- `<link rel="apple-touch-icon">` (iOS prefers it to manifest icons) and
+  `<meta name="apple-mobile-web-app-title" content="Projects">` (the Home Screen
+  label; otherwise iOS uses `<title>`).
+- `theme-color` as a light/dark pair with `media`, then
+  `<meta name="color-scheme" content="light dark">` before the stylesheet.
+- `viewport-fit=cover`, so pages run under the notch and home indicator. Anything
+  fixed to an edge must pad with `env(safe-area-inset-*)`.
+- Deliberately absent: `apple-mobile-web-app-capable` (covered by
+  `display: standalone`; from iOS 26 every Home Screen site opens as a web app) and
+  `apple-mobile-web-app-status-bar-style` (its `black-translucent` value would put
+  white status-bar text over the light header).
+- Served over plain HTTP, so no service worker or offline support (they need a
+  secure context).
+
+Styling conventions (`style.css`):
+
+- Every colour is a custom property on `:root`; dark mode only overrides them in
+  `@media (prefers-color-scheme: dark)`. Add a colour as a token in both blocks and
+  keep text pairs at WCAG AA (4.5:1) and component edges at 3:1.
+- `--shadow` must stay a valid shadow (not `none`): it is used inside
+  comma-separated `box-shadow` lists.
+- Phone layout is `@media (max-width: 47.99rem)`. There the main nav is a bottom
+  tab bar, `.actions` buttons go full width, and tables become cards.
+- Touch targets are at least 44×44 px (iOS default control size in the HIG). Form
+  controls use at least 16px text: WebKit zooms a focused field by 16 / font size.
+- Text for screen readers only uses `.visually-hidden`. Labels drawn with CSS
+  `content` use empty alt text (`"Start " / ""`) when a table heading already names
+  the cell.
+- The list (`.project-list`) becomes cards from the same table markup and relies
+  on the cell classes `name`, `category`, `medium`, `priority` (+ `data-priority`),
+  `status` (a `.badge` with `data-status`), and `date start|target` (+ `empty`).
+  Phones sort from the `.sort-panel` disclosure, which reuses the headings' URLs.
+  Filters sit in `.filter-panel`, open when a choice filter is active.
+- The import preview's phone cards label cells **by position** (`nth-child`), in
+  the order of `importer.preview.COLUMNS`, because the import view tests match the
+  cells' exact markup.
+- `.actions a.danger` is the red destructive action; `button.danger` the red
+  submit.
 
 ## 10. Tests (`tests/`)
 
@@ -253,6 +304,8 @@ Template conventions:
 | Import | `test_import_parsers.py`, `test_import_preview.py`, `test_import_confirm.py`, `test_import_views.py` |
 | Migrations | `test_migrations.py` (on-disk DB under `tmp_path`) |
 | Health, Gunicorn conf, SQL `casefold`, model | `test_health.py`, `test_gunicorn_conf.py`, `test_sql_functions.py`, `test_models.py` |
+| Head tags, manifest and icon serving, nav `aria-current` | `test_web_app.py` |
+| Markup the CSS relies on (list cards, sort/filter panels, detail, 413) | `test_list_layout.py`, `test_page_markup.py` |
 
 - Fixtures in `tests/fixtures/` are **generated**. Edit the rows in
   `scripts/make_fixtures.py`, then run `.venv/bin/python scripts/make_fixtures.py`.
@@ -302,7 +355,10 @@ unrequested fields). Every place that enumerates fields:
 - `services`: `ProjectData`, `validate_project`, `_fields`, and `SORT_COLUMNS` if sortable
 - `forms`: the form field and `PROJECT_FIELDS`
 - `projects.COLUMN_LABELS`
-- templates: `projects/detail.html`, plus `projects/index.html` (header and cell) if listed
+- templates: `projects/detail.html`, plus `projects/index.html` (header and cell, with
+  a class for the phone card CSS) if listed
+- `style.css`: the card order in the `.project-list` phone block if listed, and the
+  import preview's positional `nth-child` labels
 - importer: `preview.REQUIRED_COLUMNS` or `OPTIONAL_COLUMNS`
 - `scripts/make_fixtures.py`, then regenerate the fixtures
 - docs: the README (pages, import headers, sort params) and `CLAUDE.md`'s domain table
@@ -333,6 +389,11 @@ unrequested fields). Every place that enumerates fields:
   - Locale-aware name sorting.
   - Browser-side `required`/`maxlength` hints.
   - Pagination if the list grows large.
+  - Dynamic Type: follow the iPhone's text-size setting (needs research into what
+    WebKit supports).
+  - 192/512 px manifest icons for Android and desktop installs.
+  - A manual "light/dark/auto" switch (would need a stored preference).
+  - Service worker and offline support, which need HTTPS first.
 - **Import:**
   - Row/cell caps against compressed-file blowup.
   - Other text date formats (would need an explicit owner decision).

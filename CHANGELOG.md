@@ -99,6 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the status bar colour when opened from the Home Screen. Text in both themes meets
   WCAG AA contrast (4.5:1), and field borders, the switch and the focus ring meet
   3:1.
+- README section "On an iPhone": adding the app to the Home Screen, what does and
+  doesn't work over plain HTTP, and how to regenerate the icon.
 - `GET /healthz` now reads the projects table and returns 503 if the database
   can't be read, so a wrong `DATABASE_URL`, bad file permissions, or a missing
   `flask db upgrade` shows up in the deployment check.
