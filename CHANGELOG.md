@@ -95,6 +95,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a symbol and a coloured edge as well as the word; the import page, delete
   confirmation and "file too large" page get the same buttons, and the file picker
   a pill-shaped button.
+- Dark mode that follows the iPhone's (or computer's) Light/Dark setting, including
+  the status bar colour when opened from the Home Screen. Text in both themes meets
+  WCAG AA contrast (4.5:1), and field borders, the switch and the focus ring meet
+  3:1.
 - `GET /healthz` now reads the projects table and returns 503 if the database
   can't be read, so a wrong `DATABASE_URL`, bad file permissions, or a missing
   `flask db upgrade` shows up in the deployment check.

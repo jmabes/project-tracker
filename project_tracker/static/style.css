@@ -17,17 +17,18 @@
   --text: #000000;
   --muted: #6c6c70;
   --separator: rgba(60, 60, 67, 0.18);
-  --control-border: #8e8e93;
+  --control-border: #7c7c80;
   --accent: #0a5fd0;
   --accent-text: #0a5fd0;
   --on-accent: #ffffff;
   --accent-tint: rgba(10, 95, 208, 0.12);
   --danger: #c40012;
+  --danger-fill: #c40012;
   --on-danger: #ffffff;
   --danger-tint: rgba(215, 0, 21, 0.08);
   --ok-text: #136c2e;
   --ok-bg: #e2f6e6;
-  --switch-off: rgba(120, 120, 128, 0.32);
+  --switch-off: #8e8e93;
   --switch-on: #248a3d;
   --s-not-started: #3a3a3c;
   --s-not-started-bg: #ececf0;
@@ -49,6 +50,53 @@
   --gutter-left: max(1rem, env(safe-area-inset-left, 0px));
   --gutter-right: max(1rem, env(safe-area-inset-right, 0px));
   --tab-bar-height: 58px;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236c6c70' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  color-scheme: light dark;
+}
+
+/* Dark mode follows the system setting. Values start from Apple's dark system
+   colours (HIG, Color) and are adjusted where needed for WCAG AA contrast. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --fill: rgba(118, 118, 128, 0.24);
+    --fill-strong: rgba(118, 118, 128, 0.36);
+    --text: #ffffff;
+    --muted: #aeaeb2;
+    --separator: rgba(84, 84, 88, 0.65);
+    --control-border: #8e8e93;
+    --accent: #0a6ae0;
+    --accent-text: #5cb8ff;
+    --on-accent: #ffffff;
+    --accent-tint: rgba(64, 156, 255, 0.2);
+    --danger: #ff6165;
+    --danger-fill: #d70015;
+    --on-danger: #ffffff;
+    --danger-tint: rgba(255, 97, 101, 0.16);
+    --ok-text: #6fe08c;
+    --ok-bg: #10331c;
+    --switch-off: #757579;
+    --switch-on: #248a3d;
+    --s-not-started: #d1d1d6;
+    --s-not-started-bg: #2c2c2e;
+    --s-in-progress: #8cc8ff;
+    --s-in-progress-bg: #0f2a4d;
+    --s-on-hold: #ffc46b;
+    --s-on-hold-bg: #3d2a0c;
+    --s-done: #6fe08c;
+    --s-done-bg: #10331c;
+    --s-abandoned: #c2bdcc;
+    --s-abandoned-bg: #2a2830;
+    --p-high: #ff6165;
+    --p-medium: #ffa056;
+    --p-low: #8e8e93;
+    --bar: rgba(22, 22, 24, 0.82);
+    /* Not "none": --shadow is also used inside comma-separated box-shadow lists. */
+    --shadow: 0 0 transparent;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23aeaeb2' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
 }
 
 *,
@@ -288,7 +336,7 @@ button {
 
 button.danger {
   color: var(--on-danger);
-  background: var(--danger);
+  background: var(--danger-fill);
 }
 
 .actions a {
@@ -342,7 +390,7 @@ button.danger {
   -webkit-appearance: none;
   appearance: none;
   padding-right: 2.75rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236c6c70' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: var(--chevron);
   background-position: right 1rem center;
   background-repeat: no-repeat;
   background-size: 12px;
@@ -878,7 +926,7 @@ button.danger {
   font-size: 0.75rem;
   font-weight: 700;
   vertical-align: 0.05em;
-  color: var(--on-accent);
+  color: var(--surface);
 }
 
 .import-valid .outcome {

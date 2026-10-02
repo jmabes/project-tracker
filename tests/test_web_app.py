@@ -138,3 +138,20 @@ def test_nav_marks_nothing_on_a_project_page(client: FlaskClient) -> None:
 def test_nav_icons_are_hidden_from_assistive_tech(client: FlaskClient) -> None:
     nav = nav_of(client.get("/").get_data(as_text=True))
     assert nav.count("<svg") == nav.count('aria-hidden="true"') == 3
+
+
+def test_theme_color_follows_light_and_dark_mode(client: FlaskClient) -> None:
+    head = head_of(client, "/")
+    colours = re.findall(
+        r'<meta name="theme-color" content="(#[0-9a-f]{6})" '
+        r'media="\(prefers-color-scheme: (light|dark)\)">',
+        head,
+    )
+    assert [scheme for _, scheme in colours] == ["light", "dark"]
+    assert colours[0][0] != colours[1][0]
+
+
+def test_color_scheme_is_declared_before_the_stylesheet(client: FlaskClient) -> None:
+    head = head_of(client, "/")
+    meta = head.index('<meta name="color-scheme" content="light dark">')
+    assert meta < head.index('<link rel="stylesheet"')
