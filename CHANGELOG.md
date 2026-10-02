@@ -76,6 +76,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   header (`Target Date` or `target_date`). A new migration renames the column and
   keeps existing dates. Run `flask db upgrade` after updating. Old bookmarks using
   `sort=estimated_completion_date` fall back to the default sort.
+- Restyled for phones in the look of current iOS: a frosted sticky header, a bottom
+  tab bar (Projects, New project, Import) on narrow screens with the current page
+  marked, pill buttons, and larger form fields. Pages fill the screen edge to edge
+  (`viewport-fit=cover`) and pad around the notch, Dynamic Island and home indicator.
+  Touch targets are at least 44 px and form text at least 16 px, so iOS doesn't
+  zoom in when a field is focused.
 - `GET /healthz` now reads the projects table and returns 503 if the database
   can't be read, so a wrong `DATABASE_URL`, bad file permissions, or a missing
   `flask db upgrade` shows up in the deployment check.

@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 import pytest
 from flask.testing import FlaskClient
 
+from project_tracker.services import create_project
 from scripts import make_icon
 
 STATIC = Path(__file__).resolve().parent.parent / "project_tracker" / "static"
@@ -82,3 +83,58 @@ def test_icon_is_served_as_a_180px_opaque_png(client: FlaskClient) -> None:
 
 def test_committed_icon_matches_the_generator_script() -> None:
     assert (STATIC / "apple-touch-icon.png").read_bytes() == make_icon.render_png()
+
+
+@pytest.mark.parametrize("url", ["/", "/projects/new", "/import/"])
+def test_viewport_extends_under_the_notch(client: FlaskClient, url: str) -> None:
+    # style.css pads with env(safe-area-inset-*), which needs viewport-fit=cover.
+    assert (
+        '<meta name="viewport" content="width=device-width, initial-scale=1, '
+        'viewport-fit=cover">' in head_of(client, url)
+    )
+
+
+def nav_of(text: str) -> str:
+    return text[text.index('<nav class="site-nav"') : text.index("</nav>")]
+
+
+def current_links(text: str) -> list[str]:
+    return re.findall(r'<a href="([^"]+)" aria-current="page">', nav_of(text))
+
+
+def current_nav_links(client: FlaskClient, url: str) -> list[str]:
+    return current_links(client.get(url).get_data(as_text=True))
+
+
+@pytest.mark.parametrize(
+    ("url", "current"),
+    [("/", ["/"]), ("/projects/new", ["/projects/new"]), ("/import/", ["/import/"])],
+)
+def test_nav_marks_the_current_section(
+    client: FlaskClient, url: str, current: list[str]
+) -> None:
+    assert current_nav_links(client, url) == current
+
+
+def test_nav_marks_new_project_after_a_failed_create(client: FlaskClient) -> None:
+    response = client.post("/projects", data={"name": ""})
+    assert response.status_code == 200
+    assert current_links(response.get_data(as_text=True)) == ["/projects/new"]
+
+
+def test_nav_marks_nothing_on_a_project_page(client: FlaskClient) -> None:
+    project = create_project(
+        {
+            "name": "Shed",
+            "category": "Home",
+            "medium": "DIY",
+            "priority": "Low",
+            "status": "Not started",
+        }
+    )
+    assert current_nav_links(client, f"/projects/{project.id}") == []
+
+
+def test_nav_icons_are_hidden_from_assistive_tech(client: FlaskClient) -> None:
+    nav = nav_of(client.get("/").get_data(as_text=True))
+    assert nav.count("<svg") == nav.count('aria-hidden="true"') == 3

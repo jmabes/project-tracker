@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {# viewport-fit=cover lets the page fill the screen edge to edge; style.css pads the
+     header, tab bar and content with env(safe-area-inset-*) to clear the notch,
+     Dynamic Island and home indicator. #}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}{% endblock %} · Project Tracker</title>
   {# Home-screen web app. iOS reads name, display, start_url and theme_color from the
      manifest, but uses apple-touch-icon in preference to manifest icons and takes the
@@ -16,9 +19,21 @@
 <body>
   <header class="site-header">
     <a class="site-name" href="{{ url_for('projects.index') }}">Project Tracker</a>
-    <nav>
-      <a href="{{ url_for('projects.new') }}">New project</a>
-      <a href="{{ url_for('imports.upload_form') }}">Import</a>
+    {# A row of pills on wide screens; a tab bar along the bottom on phones. #}
+    {% set section = request.endpoint %}
+    <nav class="site-nav" aria-label="Main">
+      <a href="{{ url_for('projects.index') }}"{% if section == "projects.index" %} aria-current="page"{% endif %}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>
+        <span>Projects</span>
+      </a>
+      <a href="{{ url_for('projects.new') }}"{% if section in ("projects.new", "projects.create") %} aria-current="page"{% endif %}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>New project</span>
+      </a>
+      <a href="{{ url_for('imports.upload_form') }}"{% if section and section.startswith("imports.") %} aria-current="page"{% endif %}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        <span>Import</span>
+      </a>
     </nav>
   </header>
   <main class="{% block main_class %}{% endblock %}">
