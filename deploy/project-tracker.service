@@ -1,0 +1,64 @@
+# systemd unit for project-tracker. Install and manage it with docs/deployment.md.
+# Directive reference (systemd 255, as on Ubuntu 24.04): systemd.unit(5),
+# systemd.service(5), systemd.exec(5) and systemd.kill(5).
+
+[Unit]
+Description=project-tracker (Gunicorn)
+Documentation=https://github.com/jmabes/project-tracker/blob/main/docs/deployment.md
+# Gunicorn binds 0.0.0.0, which works before addresses are configured, so the
+# weaker network.target is enough (network-online.target would delay boot).
+After=network.target
+
+[Service]
+# Gunicorn tells systemd once it is listening, so `systemctl start` waits for
+# that and reports a failure to bind the port. App errors (for example a
+# missing SECRET_KEY) happen just after, when workers load the app: Gunicorn
+# exits and Restart= below retries until the cause is fixed.
+Type=notify
+NotifyAccess=main
+User=project-tracker
+Group=project-tracker
+WorkingDirectory=/opt/project-tracker
+# SECRET_KEY, DATABASE_URL, PROJECT_TRACKER_CONFIG, PROJECT_TRACKER_HOST and
+# PROJECT_TRACKER_PORT.
+EnvironmentFile=/etc/project-tracker/project-tracker.env
+ExecStart=/opt/project-tracker/.venv/bin/gunicorn --config /opt/project-tracker/gunicorn.conf.py
+# Restart after a crash, waiting 5 seconds between attempts. A clean
+# `systemctl stop` is not restarted.
+Restart=on-failure
+RestartSec=5
+# SIGTERM to the Gunicorn master for a graceful stop, then SIGKILL to anything
+# left once TimeoutStopSec runs out.
+KillMode=mixed
+TimeoutStopSec=30
+
+# --- Sandboxing ---
+# Creates /var/lib/project-tracker owned by User=/Group= and keeps it writable;
+# the SQLite database and its journal file live there.
+StateDirectory=project-tracker
+StateDirectoryMode=0750
+# Files the service creates (the database) are not readable by other users.
+UMask=0027
+# Everything else is read-only, including /opt/project-tracker and /etc.
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+NoNewPrivileges=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+SystemCallArchitectures=native
+
+[Install]
+# Start at boot.
+WantedBy=multi-user.target
