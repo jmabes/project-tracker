@@ -40,7 +40,7 @@ from project_tracker.services import (
 
 REQUIRED_COLUMNS: tuple[str, ...] = ("name", "category", "medium", "priority", "status")
 # A missing date column means every row's date is blank.
-OPTIONAL_COLUMNS: tuple[str, ...] = ("start_date", "estimated_completion_date")
+OPTIONAL_COLUMNS: tuple[str, ...] = ("start_date", "target_date")
 COLUMNS: tuple[str, ...] = REQUIRED_COLUMNS + OPTIONAL_COLUMNS
 
 DAMAGED_MESSAGE = "The import data was missing or damaged. Upload the file again."

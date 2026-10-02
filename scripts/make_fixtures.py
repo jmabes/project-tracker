@@ -33,7 +33,7 @@ HEADER: list[Cell] = [
     "Priority",
     "Status",
     "Start Date",
-    "estimated_completion_date",
+    "target_date",
     "Notes",
 ]
 
@@ -56,7 +56,7 @@ ROWS: list[list[Cell]] = [
     [1984, "Home", "DIY", "Medium", "Done", None, None],
     # Row 5: invalid category.
     ["Fence repair", "Garden", "DIY", "High", "In progress", None, None],
-    # Row 6: invalid; estimated completion before the start date.
+    # Row 6: invalid; target date before the start date.
     [
         "Backwards dates",
         "Tech",

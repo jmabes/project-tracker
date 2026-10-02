@@ -40,7 +40,7 @@ def test_upgrade_creates_schema_on_empty_database(file_db_app: Flask) -> None:
         "priority",
         "status",
         "start_date",
-        "estimated_completion_date",
+        "target_date",
         "created_at",
         "updated_at",
     }
@@ -73,3 +73,49 @@ def test_downgrade_removes_schema(file_db_app: Flask) -> None:
     downgrade(directory=MIGRATIONS_DIR, revision="base")
 
     assert "projects" not in sa.inspect(db.engine).get_table_names()
+
+
+def test_rename_to_target_date_keeps_data_and_name_index(file_db_app: Flask) -> None:
+    # Start from the schema before the rename, with a project in it.
+    upgrade(directory=MIGRATIONS_DIR, revision="86bbf26dee64")
+    with db.engine.begin() as conn:
+        conn.execute(
+            sa.text(
+                "INSERT INTO projects (name, category, medium, priority, status, "
+                "start_date, estimated_completion_date, created_at, updated_at) "
+                "VALUES ('Shed', 'Home', 'DIY', 'Low', 'Done', '2026-01-01', "
+                "'2026-06-30', '2026-01-01 00:00:00', '2026-01-01 00:00:00')"
+            )
+        )
+
+    upgrade(directory=MIGRATIONS_DIR, revision="4ed531acccd0")
+
+    columns = {c["name"] for c in sa.inspect(db.engine).get_columns("projects")}
+    assert "target_date" in columns
+    assert "estimated_completion_date" not in columns
+    with db.engine.connect() as conn:
+        assert (
+            conn.execute(
+                sa.text("SELECT target_date FROM projects WHERE name = 'Shed'")
+            ).scalar_one()
+            == "2026-06-30"
+        )
+    # The case-insensitive unique name index still rejects a clashing name.
+    with pytest.raises(sa.exc.IntegrityError), db.engine.begin() as conn:
+        conn.execute(
+            sa.text(
+                "INSERT INTO projects (name, category, medium, priority, status, "
+                "created_at, updated_at) VALUES ('SHED', 'Home', 'DIY', 'Low', "
+                "'Done', '2026-01-01 00:00:00', '2026-01-01 00:00:00')"
+            )
+        )
+
+    downgrade(directory=MIGRATIONS_DIR, revision="86bbf26dee64")
+
+    with db.engine.connect() as conn:
+        assert (
+            conn.execute(
+                sa.text("SELECT estimated_completion_date FROM projects")
+            ).scalar_one()
+            == "2026-06-30"
+        )

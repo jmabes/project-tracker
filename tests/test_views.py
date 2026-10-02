@@ -29,7 +29,7 @@ def form_data(**overrides: str) -> dict[str, str]:
         "priority": "Medium",
         "status": "Not started",
         "start_date": "",
-        "estimated_completion_date": "",
+        "target_date": "",
     }
     data.update(overrides)
     return data
@@ -91,7 +91,7 @@ def test_detail_shows_all_fields(app: Flask, client: FlaskClient) -> None:
         priority="High",
         status="In progress",
         start_date="2026-03-01",
-        estimated_completion_date="2026-04-15",
+        target_date="2026-04-15",
     )
 
     response = client.get(f"/projects/{project.id}")
@@ -134,10 +134,7 @@ def test_new_form_renders_every_field(client: FlaskClient) -> None:
         for value in values:
             assert f'<option value="{value}">{value}</option>' in text
     assert 'id="start_date" name="start_date" type="date"' in text
-    assert (
-        'id="estimated_completion_date" name="estimated_completion_date" type="date"'
-        in text
-    )
+    assert 'id="target_date" name="target_date" type="date"' in text
 
 
 def test_header_links_to_new_project(client: FlaskClient) -> None:
@@ -154,7 +151,7 @@ def test_create_saves_and_redirects_to_detail(app: Flask, client: FlaskClient) -
             priority="High",
             status="In progress",
             start_date="2026-03-01",
-            estimated_completion_date="2026-04-15",
+            target_date="2026-04-15",
         ),
     )
 
@@ -176,7 +173,7 @@ def test_create_with_blank_dates(app: Flask, client: FlaskClient) -> None:
     assert response.status_code == 302
     [project] = all_projects()
     assert project.start_date is None
-    assert project.estimated_completion_date is None
+    assert project.target_date is None
 
 
 def test_create_invalid_input_rerenders_with_values_and_errors(
@@ -189,7 +186,7 @@ def test_create_invalid_input_rerenders_with_values_and_errors(
             category="Tech",
             medium="",
             start_date="2026-05-01",
-            estimated_completion_date="2026-04-01",
+            target_date="2026-04-01",
         ),
     )
 
@@ -204,8 +201,8 @@ def test_create_invalid_input_rerenders_with_values_and_errors(
     # Errors appear with the field they belong to.
     assert '<ul class="field-errors" id="medium-errors">' in text
     assert "Medium is required." in text
-    assert '<ul class="field-errors" id="estimated_completion_date-errors">' in text
-    assert "Estimated completion date must be on or after the start date." in text
+    assert '<ul class="field-errors" id="target_date-errors">' in text
+    assert "Target date must be on or after the start date." in text
     assert 'id="name-errors"' not in text
 
 
@@ -261,7 +258,7 @@ def test_edit_form_is_filled_with_saved_values(app: Flask, client: FlaskClient) 
         priority="High",
         status="On hold",
         start_date="2026-03-01",
-        estimated_completion_date="2026-04-15",
+        target_date="2026-04-15",
     )
 
     response = client.get(f"/projects/{project.id}/edit")
@@ -273,7 +270,7 @@ def test_edit_form_is_filled_with_saved_values(app: Flask, client: FlaskClient) 
     for value in ("Tech", "Hardware", "High", "On hold"):
         assert f'<option selected value="{value}">{value}</option>' in text
     assert 'name="start_date" type="date" value="2026-03-01"' in text
-    assert 'name="estimated_completion_date" type="date" value="2026-04-15"' in text
+    assert 'name="target_date" type="date" value="2026-04-15"' in text
 
 
 def test_detail_links_to_edit(app: Flask, client: FlaskClient) -> None:

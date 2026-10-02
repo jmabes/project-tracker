@@ -24,7 +24,7 @@ def valid_input(**overrides: object) -> dict[str, object]:
         "priority": "Medium",
         "status": "Not started",
         "start_date": "",
-        "estimated_completion_date": "",
+        "target_date": "",
     }
     raw.update(overrides)
     return raw
@@ -48,7 +48,7 @@ def test_create_project_saves_cleaned_values(app: Flask) -> None:
     assert saved.name == "Build a shed"
     assert saved.category == "Home"
     assert saved.start_date == date(2026, 3, 1)
-    assert saved.estimated_completion_date is None
+    assert saved.target_date is None
 
 
 def test_create_project_invalid_input_writes_nothing(app: Flask) -> None:
@@ -104,7 +104,7 @@ def test_update_project_saves_new_values(app: Flask) -> None:
             name="Build a bigger shed",
             status="In progress",
             start_date="2026-03-01",
-            estimated_completion_date="2026-05-01",
+            target_date="2026-05-01",
         ),
     )
 
@@ -113,7 +113,7 @@ def test_update_project_saves_new_values(app: Flask) -> None:
     assert saved is not None
     assert saved.name == "Build a bigger shed"
     assert saved.status == "In progress"
-    assert saved.estimated_completion_date == date(2026, 5, 1)
+    assert saved.target_date == date(2026, 5, 1)
 
 
 def test_update_project_may_keep_its_own_name_in_another_case(app: Flask) -> None:

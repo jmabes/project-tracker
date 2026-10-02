@@ -21,9 +21,7 @@ def make_project(**fields: object) -> Project:
 
 
 def test_project_round_trips_all_fields(app: Flask) -> None:
-    project = make_project(
-        start_date=date(2026, 3, 1), estimated_completion_date=date(2026, 4, 1)
-    )
+    project = make_project(start_date=date(2026, 3, 1), target_date=date(2026, 4, 1))
     db.session.add(project)
     db.session.commit()
     project_id = project.id
@@ -36,7 +34,7 @@ def test_project_round_trips_all_fields(app: Flask) -> None:
     assert (stored.category, stored.medium) == ("Home", "DIY")
     assert (stored.priority, stored.status) == ("Medium", "Not started")
     assert stored.start_date == date(2026, 3, 1)
-    assert stored.estimated_completion_date == date(2026, 4, 1)
+    assert stored.target_date == date(2026, 4, 1)
 
 
 def test_optional_dates_default_to_none(app: Flask) -> None:
@@ -45,7 +43,7 @@ def test_optional_dates_default_to_none(app: Flask) -> None:
     db.session.commit()
 
     assert project.start_date is None
-    assert project.estimated_completion_date is None
+    assert project.target_date is None
 
 
 def test_timestamps_set_on_insert_and_update(app: Flask) -> None:

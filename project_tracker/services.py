@@ -42,7 +42,7 @@ class ProjectData:
     priority: str
     status: str
     start_date: date | None
-    estimated_completion_date: date | None
+    target_date: date | None
 
 
 class ProjectValidationError(Exception):
@@ -100,17 +100,17 @@ def validate_project(
             cleaned_choices[field] = value
 
     dates: dict[str, date | None] = {}
-    for field in ("start_date", "estimated_completion_date"):
+    for field in ("start_date", "target_date"):
         try:
             dates[field] = _parse_date(raw.get(field))
         except ValueError as exc:
             fail(field, str(exc))
 
-    start, estimate = dates.get("start_date"), dates.get("estimated_completion_date")
-    if start is not None and estimate is not None and estimate < start:
+    start, target = dates.get("start_date"), dates.get("target_date")
+    if start is not None and target is not None and target < start:
         fail(
-            "estimated_completion_date",
-            "Estimated completion date must be on or after the start date.",
+            "target_date",
+            "Target date must be on or after the start date.",
         )
 
     if errors or name is None:  # name is None always records an error
@@ -119,7 +119,7 @@ def validate_project(
     return ProjectData(
         name=name,
         start_date=start,
-        estimated_completion_date=estimate,
+        target_date=target,
         **cleaned_choices,
     )
 
@@ -192,7 +192,7 @@ def _fields(data: ProjectData) -> dict[str, object]:
         "priority": data.priority,
         "status": data.status,
         "start_date": data.start_date,
-        "estimated_completion_date": data.estimated_completion_date,
+        "target_date": data.target_date,
     }
 
 
@@ -268,7 +268,7 @@ SORT_COLUMNS: tuple[str, ...] = (
     "priority",
     "status",
     "start_date",
-    "estimated_completion_date",
+    "target_date",
 )
 DEFAULT_SORT = "priority"
 # Every column starts ascending except priority, which starts High first.

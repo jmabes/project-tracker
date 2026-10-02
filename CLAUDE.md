@@ -62,7 +62,7 @@ A `Project` has exactly these user-facing fields (plus `id`, `created_at`, `upda
 | `priority` | Required; one of: High, Medium, Low |
 | `status` | Required; one of: Not started, In progress, On hold, Done, Abandoned |
 | `start_date` | Optional date |
-| `estimated_completion_date` | Optional date; must be on or after `start_date` when both are set |
+| `target_date` | Optional date; must be on or after `start_date` when both are set |
 
 - There are deliberately **no notes or next-steps fields**. Those live in each project's own
   tracker. Do not add them.

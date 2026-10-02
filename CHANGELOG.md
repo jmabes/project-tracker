@@ -61,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The temporary name-only index is replaced by the project list.
+- The estimated completion date is now called the **target date** everywhere: the
+  `target_date` field and database column, the "Target date" label on forms, the
+  list and detail pages, the list's `sort=target_date` parameter, and the import
+  header (`Target Date` or `target_date`). A new migration renames the column and
+  keeps existing dates. Run `flask db upgrade` after updating. Old bookmarks using
+  `sort=estimated_completion_date` fall back to the default sort.
 - `GET /healthz` now reads the projects table and returns 503 if the database
   can't be read, so a wrong `DATABASE_URL`, bad file permissions, or a missing
   `flask db upgrade` shows up in the deployment check.
