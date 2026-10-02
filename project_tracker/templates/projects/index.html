@@ -6,36 +6,77 @@
 
 {% block content %}
   <h1>Projects</h1>
+  {% if projects %}
+    <p class="subtitle">{{ projects|length }} project{{ "" if projects|length == 1 else "s" }}</p>
+  {% endif %}
 
-  {# GET form: filters live in the query string, so views can be bookmarked. #}
-  <form class="filters" method="get" action="{{ url_for('projects.index') }}">
-    {% for field, allowed in choice_fields.items() %}
-      <div class="field">
-        <label for="filter-{{ field }}">{{ field|capitalize }}</label>
-        <select id="filter-{{ field }}" name="{{ field }}">
-          <option value="">Any</option>
-          {% for value in allowed %}
-            <option value="{{ value }}"{% if options|attr(field) == value %} selected{% endif %}>{{ value }}</option>
+  {# Filters sit in a disclosure, open whenever a choice filter is applied. The
+     count includes "Include Done and Abandoned". #}
+  {% set active = namespace(choices=0) %}
+  {% for field in choice_fields %}
+    {% if options|attr(field) %}{% set active.choices = active.choices + 1 %}{% endif %}
+  {% endfor %}
+  {% set active_count = active.choices + (1 if options.show_finished else 0) %}
+  <div class="list-tools">
+    <details class="filter-panel"{% if active.choices %} open{% endif %}>
+      <summary>
+        Filters
+        {%- if active_count %} <span class="count"><span class="visually-hidden">(</span>{{ active_count }}<span class="visually-hidden"> active)</span></span>{% endif %}
+      </summary>
+      {# GET form: filters live in the query string, so views can be bookmarked. #}
+      <form class="filters" method="get" action="{{ url_for('projects.index') }}">
+        {% for field, allowed in choice_fields.items() %}
+          <div class="field">
+            <label for="filter-{{ field }}">{{ field|capitalize }}</label>
+            <select id="filter-{{ field }}" name="{{ field }}">
+              <option value="">Any</option>
+              {% for value in allowed %}
+                <option value="{{ value }}"{% if options|attr(field) == value %} selected{% endif %}>{{ value }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endfor %}
+        <div class="field checkbox">
+          <label>
+            <input type="checkbox" name="show_finished" value="1"{% if options.show_finished %} checked{% endif %}>
+            Include Done and Abandoned
+          </label>
+        </div>
+        {% set args = options.query_args() %}
+        {% if "sort" in args %}
+          <input type="hidden" name="sort" value="{{ args.sort }}">
+          <input type="hidden" name="dir" value="{{ args.dir }}">
+        {% endif %}
+        <div class="filter-actions">
+          <button type="submit">Apply filters</button>
+          <a href="{{ url_for('projects.index') }}">Reset</a>
+        </div>
+      </form>
+    </details>
+
+    {# Phones show cards, which hide the column headings, so they sort from this
+       panel instead. It uses the headings' links, and its button names the
+       current sort. #}
+    {% if projects %}
+      {% set current = headers|selectattr("aria_sort")|first %}
+      <details class="sort-panel">
+        <summary>
+          Sort: {{ current.label }}
+          {%- if current.aria_sort == "ascending" %} <span aria-hidden="true">↑</span><span class="visually-hidden">, ascending</span>
+          {%- else %} <span aria-hidden="true">↓</span><span class="visually-hidden">, descending</span>
+          {%- endif %}
+        </summary>
+        <nav class="sort-chips" aria-label="Sort projects">
+          {% for header in headers %}
+            <a href="{{ header.url }}"{% if header.aria_sort %} aria-current="true"{% endif %}>{{ header.label }}
+              {%- if header.aria_sort == "ascending" %} <span aria-hidden="true">↑</span>
+              {%- elif header.aria_sort == "descending" %} <span aria-hidden="true">↓</span>
+              {%- endif %}</a>
           {% endfor %}
-        </select>
-      </div>
-    {% endfor %}
-    <div class="field checkbox">
-      <label>
-        <input type="checkbox" name="show_finished" value="1"{% if options.show_finished %} checked{% endif %}>
-        Include Done and Abandoned
-      </label>
-    </div>
-    {% set args = options.query_args() %}
-    {% if "sort" in args %}
-      <input type="hidden" name="sort" value="{{ args.sort }}">
-      <input type="hidden" name="dir" value="{{ args.dir }}">
+        </nav>
+      </details>
     {% endif %}
-    <div class="filter-actions">
-      <button type="submit">Apply filters</button>
-      <a href="{{ url_for('projects.index') }}">Reset</a>
-    </div>
-  </form>
+  </div>
 
   {% if projects %}
     {% if options.hides_finished %}
@@ -50,7 +91,7 @@
     {% endif %}
 
     <div class="table-wrap">
-      <table class="project-table">
+      <table class="project-table project-list">
         <thead>
           <tr>
             {% for header in headers %}
@@ -67,12 +108,12 @@
           {% for project in projects %}
             <tr>
               <td class="name"><a href="{{ url_for('projects.detail', project_id=project.id) }}">{{ project.name }}</a></td>
-              <td>{{ project.category }}</td>
-              <td>{{ project.medium }}</td>
-              <td>{{ project.priority }}</td>
-              <td>{{ project.status }}</td>
-              <td class="date">{{ project.start_date or "—" }}</td>
-              <td class="date">{{ project.target_date or "—" }}</td>
+              <td class="category">{{ project.category }}</td>
+              <td class="medium">{{ project.medium }}</td>
+              <td class="priority" data-priority="{{ project.priority }}">{{ project.priority }}</td>
+              <td class="status"><span class="badge" data-status="{{ project.status }}">{{ project.status }}</span></td>
+              <td class="date start{% if not project.start_date %} empty{% endif %}">{{ project.start_date or "—" }}</td>
+              <td class="date target{% if not project.target_date %} empty{% endif %}">{{ project.target_date or "—" }}</td>
             </tr>
           {% endfor %}
         </tbody>

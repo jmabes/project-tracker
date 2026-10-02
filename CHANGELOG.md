@@ -82,6 +82,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`viewport-fit=cover`) and pad around the notch, Dynamic Island and home indicator.
   Touch targets are at least 44 px and form text at least 16 px, so iOS doesn't
   zoom in when a field is focused.
+- The project list reads without sideways scrolling on a phone: below 48rem each
+  project is a card with its status as a coloured pill and every other field
+  underneath, and the whole card opens the project. Phones sort from a "Sort"
+  button that names the current sort and opens the same sort options as the column
+  headings. Filters sit behind a "Filters" button showing how many are active; it
+  opens by itself when a category, medium, priority or status filter is applied.
+  Wide screens keep the table, its sortable headings and `aria-sort`.
 - `GET /healthz` now reads the projects table and returns 503 if the database
   can't be read, so a wrong `DATABASE_URL`, bad file permissions, or a missing
   `flask db upgrade` shows up in the deployment check.
