@@ -89,6 +89,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   headings. Filters sit behind a "Filters" button showing how many are active; it
   opens by itself when a category, medium, priority or status filter is applied.
   Wide screens keep the table, its sortable headings and `aria-sort`.
+- Every other page restyled to match: the project page lists its fields like the
+  iPhone Settings app with the status pill and a red Delete button; the import
+  preview shows each row as a card on phones, marking Ready, Error and Skipped rows
+  with a symbol and a coloured edge as well as the word; the import page, delete
+  confirmation and "file too large" page get the same buttons, and the file picker
+  a pill-shaped button.
 - `GET /healthz` now reads the projects table and returns 503 if the database
   can't be read, so a wrong `DATABASE_URL`, bad file permissions, or a missing
   `flask db upgrade` shows up in the deployment check.

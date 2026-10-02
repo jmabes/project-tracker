@@ -7,13 +7,13 @@
   <dl class="fields">
     <dt>Category</dt><dd>{{ project.category }}</dd>
     <dt>Medium</dt><dd>{{ project.medium }}</dd>
-    <dt>Priority</dt><dd>{{ project.priority }}</dd>
-    <dt>Status</dt><dd>{{ project.status }}</dd>
+    <dt>Priority</dt><dd class="priority" data-priority="{{ project.priority }}">{{ project.priority }}</dd>
+    <dt>Status</dt><dd><span class="badge" data-status="{{ project.status }}">{{ project.status }}</span></dd>
     <dt>Start date</dt><dd>{{ project.start_date or "—" }}</dd>
     <dt>Target date</dt><dd>{{ project.target_date or "—" }}</dd>
   </dl>
   <div class="actions">
     <a href="{{ url_for('projects.edit', project_id=project.id) }}">Edit</a>
-    <a href="{{ url_for('projects.confirm_delete', project_id=project.id) }}">Delete</a>
+    <a class="danger" href="{{ url_for('projects.confirm_delete', project_id=project.id) }}">Delete</a>
   </div>
 {% endblock %}
