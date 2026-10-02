@@ -1,4 +1,103 @@
-/* Minimal hand-written styles: readable on desktop and phone, no framework. */
+/* Hand-written styles, no framework. Phone first, in the style of current iOS.
+
+   - Colours are custom properties on :root, so every rule uses var(--…).
+   - Touch targets are at least 44x44 CSS px, the iOS default control size in
+     Apple's Human Interface Guidelines (Accessibility).
+   - Form controls use at least 16px text: iOS zooms in on a focused field whose
+     text is smaller than that.
+   - viewport-fit=cover (base.html) puts the page under the notch, Dynamic Island
+     and home indicator; env(safe-area-inset-*) padding keeps content clear of them.
+   - Below 48rem the main nav becomes a tab bar fixed to the bottom of the screen. */
+
+:root {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-strong: rgba(118, 118, 128, 0.2);
+  --text: #000000;
+  --muted: #6c6c70;
+  --separator: rgba(60, 60, 67, 0.18);
+  --control-border: #7c7c80;
+  --accent: #0a5fd0;
+  --accent-text: #0a5fd0;
+  --on-accent: #ffffff;
+  --accent-tint: rgba(10, 95, 208, 0.12);
+  --danger: #c40012;
+  --danger-fill: #c40012;
+  --on-danger: #ffffff;
+  --danger-tint: rgba(215, 0, 21, 0.08);
+  --ok-text: #136c2e;
+  --ok-bg: #e2f6e6;
+  --switch-off: #8e8e93;
+  --switch-on: #248a3d;
+  --s-not-started: #3a3a3c;
+  --s-not-started-bg: #ececf0;
+  --s-in-progress: #0a4fb0;
+  --s-in-progress-bg: #e3edff;
+  --s-on-hold: #8a4b00;
+  --s-on-hold-bg: #fff1dc;
+  --s-done: #136c2e;
+  --s-done-bg: #e2f6e6;
+  --s-abandoned: #5e5a66;
+  --s-abandoned-bg: #f0eef2;
+  --p-high: #d70015;
+  --p-medium: #c55300;
+  --p-low: #8e8e93;
+  --bar: rgba(249, 249, 251, 0.82);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --radius: 12px;
+  --radius-lg: 20px;
+  --gutter-left: max(1rem, env(safe-area-inset-left, 0px));
+  --gutter-right: max(1rem, env(safe-area-inset-right, 0px));
+  --tab-bar-height: 58px;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236c6c70' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  color-scheme: light dark;
+}
+
+/* Dark mode follows the system setting. Values start from Apple's dark system
+   colours (HIG, Color) and are adjusted where needed for WCAG AA contrast. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --fill: rgba(118, 118, 128, 0.24);
+    --fill-strong: rgba(118, 118, 128, 0.36);
+    --text: #ffffff;
+    --muted: #aeaeb2;
+    --separator: rgba(84, 84, 88, 0.65);
+    --control-border: #8e8e93;
+    --accent: #0a6ae0;
+    --accent-text: #5cb8ff;
+    --on-accent: #ffffff;
+    --accent-tint: rgba(64, 156, 255, 0.2);
+    --danger: #ff6165;
+    --danger-fill: #d70015;
+    --on-danger: #ffffff;
+    --danger-tint: rgba(255, 97, 101, 0.16);
+    --ok-text: #6fe08c;
+    --ok-bg: #10331c;
+    --switch-off: #757579;
+    --switch-on: #248a3d;
+    --s-not-started: #d1d1d6;
+    --s-not-started-bg: #2c2c2e;
+    --s-in-progress: #8cc8ff;
+    --s-in-progress-bg: #0f2a4d;
+    --s-on-hold: #ffc46b;
+    --s-on-hold-bg: #3d2a0c;
+    --s-done: #6fe08c;
+    --s-done-bg: #10331c;
+    --s-abandoned: #c2bdcc;
+    --s-abandoned-bg: #2a2830;
+    --p-high: #ff6165;
+    --p-medium: #ffa056;
+    --p-low: #8e8e93;
+    --bar: rgba(22, 22, 24, 0.82);
+    /* Not "none": --shadow is also used inside comma-separated box-shadow lists. */
+    --shadow: 0 0 transparent;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23aeaeb2' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
 
 *,
 *::before,
@@ -6,192 +105,243 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #1f2328;
-  background: #f6f8fa;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: #0b5cad;
+  color: var(--accent-text);
+  text-underline-offset: 0.18em;
 }
 
+:focus-visible {
+  outline: 3px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+/* Header: sticky and frosted. The blur sits on a pseudo-element because
+   backdrop-filter on the header itself would make the header the containing block
+   for the fixed tab bar inside it. */
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 1rem;
-  background: #24292f;
+  gap: 1rem;
+  min-height: calc(52px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) var(--gutter-right) 0 var(--gutter-left);
+  border-bottom: 0.5px solid var(--separator);
 }
 
-.site-header a {
-  color: #fff;
-}
-
-.site-header nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
 .site-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
   font-weight: 700;
+  letter-spacing: -0.01em;
   text-decoration: none;
+  color: var(--text);
+}
+
+/* The checkmark mark from the home-screen icon. */
+.site-name::before {
+  content: "";
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--accent)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cpath d='M50 94 L78 122 L132 62' fill='none' stroke='%23fff' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 100% no-repeat;
+}
+
+.site-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.site-nav svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 main {
-  max-width: 40rem;
+  max-width: 42rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0.5rem var(--gutter-right) 3rem var(--gutter-left);
+}
+
+main.wide {
+  max-width: 76rem;
+}
+
+@media (max-width: 47.99rem) {
+  .site-header {
+    justify-content: center;
+  }
+
+  .site-nav {
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    padding: 4px var(--gutter-right) max(4px, env(safe-area-inset-bottom, 0px))
+      var(--gutter-left);
+    border-top: 0.5px solid var(--separator);
+    background: var(--bar);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  .site-nav a,
+  .site-nav a[aria-current="page"] {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 50px;
+    padding: 4px 0;
+    border-radius: 10px;
+    font-size: 0.6875rem;
+    color: var(--muted);
+    background: none;
+  }
+
+  .site-nav a[aria-current="page"] {
+    color: var(--accent-text);
+  }
+
+  .site-nav svg {
+    width: 26px;
+    height: 26px;
+    stroke-width: 1.8;
+  }
+
+  /* Leave room so the last content can scroll clear of the tab bar. */
+  main {
+    padding-bottom: calc(var(--tab-bar-height) + 2rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 h1 {
-  font-size: 1.5rem;
+  margin: 0.75rem 0 1rem;
+  font-size: 2.125rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
+}
+
+h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 /* Flash messages */
 .flashes {
   list-style: none;
-  margin: 0 0 1rem;
+  margin: 0.75rem 0;
   padding: 0;
 }
 
 .flash {
-  margin-bottom: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #8fc59a;
-  border-radius: 4px;
-  background: #e6f4ea;
+  margin: 0 0 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  color: var(--ok-text);
+  background: var(--ok-bg);
 }
 
 .flash-error {
-  border-color: #e5a0a0;
-  background: #fbeaea;
+  color: var(--danger);
+  background: var(--danger-tint);
 }
 
-main.wide {
-  max-width: 72rem;
-}
-
-/* Project list: filters */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0 1rem;
-  margin-bottom: 1rem;
-}
-
-.filters .field {
-  flex: 1 1 9rem;
-}
-
-.filters .checkbox label {
-  display: flex;
+/* Buttons. Links in an action row look like buttons too. */
+button,
+.actions a {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: normal;
-}
-
-.filters .checkbox input {
-  width: auto;
-}
-
-.filter-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.finished-toggle,
-.empty-state {
-  margin: 0 0 1rem;
-}
-
-/* Project list: table. The wrapper scrolls sideways on narrow screens. */
-.table-wrap {
-  overflow-x: auto;
-  border: 1px solid #d0d7de;
-  border-radius: 4px;
-  background: #fff;
-}
-
-.project-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.project-table th,
-.project-table td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #d0d7de;
-  text-align: left;
-  vertical-align: top;
-}
-
-.project-table th {
-  white-space: nowrap;
-  background: #f6f8fa;
-}
-
-.project-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.project-table .name {
-  min-width: 12rem;
-  overflow-wrap: anywhere;
-}
-
-.project-table .date {
-  white-space: nowrap;
-}
-
-/* Import preview */
-.import-table .outcome {
-  min-width: 14rem;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 50px;
+  padding: 0 1.5rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
   font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.row-messages {
-  margin: 0.25rem 0 0;
-  padding-left: 1.25rem;
-  font-weight: normal;
+button {
+  color: var(--on-accent);
+  background: var(--accent);
 }
 
-.import-valid .outcome {
-  color: #1a7f37;
+button.danger {
+  color: var(--on-danger);
+  background: var(--danger-fill);
 }
 
-.import-invalid .outcome {
-  color: #c62828;
-}
-
-.import-skipped .outcome {
-  color: #6e7781;
-}
-
-/* Project detail */
-
-.fields {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
-}
-
-.fields dt {
-  font-weight: 600;
-}
-
-.fields dd {
-  margin: 0;
+.actions a {
+  color: var(--accent-text);
+  background: var(--fill);
 }
 
 .actions {
@@ -202,50 +352,825 @@ main.wide {
   margin-top: 1.5rem;
 }
 
-/* Forms */
+@media (max-width: 47.99rem) {
+  .actions > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Forms: filled, rounded controls. */
 .field {
-  margin-bottom: 1rem;
+  margin-bottom: 1.125rem;
 }
 
 .field label {
   display: block;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.375rem 0.25rem;
+  font-size: 0.8125rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .field input,
 .field select {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #8c959f;
-  border-radius: 4px;
+  min-height: 50px;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
   font: inherit;
-  background: #fff;
+  font-size: max(1rem, 16px);
+  color: var(--text);
+  background-color: var(--surface);
+}
+
+.field select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 2.75rem;
+  background-image: var(--chevron);
+  background-position: right 1rem center;
+  background-repeat: no-repeat;
+  background-size: 12px;
 }
 
 .field.has-error input,
 .field.has-error select {
-  border-color: #c62828;
+  border-color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
 }
 
 .field-errors {
   list-style: none;
-  margin: 0.25rem 0 0;
+  margin: 0.375rem 0 0 0.25rem;
   padding: 0;
-  color: #c62828;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--danger);
 }
 
-button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #1a7f37;
-  border-radius: 4px;
-  font: inherit;
-  color: #fff;
-  background: #1f883d;
+/* Text for screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.subtitle {
+  margin: -0.75rem 0 1.25rem;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+/* Project list: the Filters and Sort disclosures share a toolbar row. An open
+   panel takes the whole row, pushing the other button below it. */
+.list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.list-tools details[open] {
+  flex: 1 1 100%;
+}
+
+.list-tools summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  list-style: none;
+  background: var(--fill);
   cursor: pointer;
 }
 
-button.danger {
-  border-color: #a40e26;
-  background: #cf222e;
+.list-tools summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron: points down when closed, up when open. */
+.list-tools summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.list-tools details[open] > summary::after {
+  transform: translateY(2px) rotate(-135deg);
+}
+
+.filter-panel .count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.filters .field {
+  margin: 0;
+}
+
+.filters .field select {
+  min-height: 44px;
+  border-color: transparent;
+  border-radius: 999px;
+  background-color: var(--fill);
+}
+
+.filters .checkbox {
+  grid-column: 1 / 3;
+  align-self: center;
+}
+
+.filters .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* An iOS-style switch. It is still a native checkbox for keyboards and screen
+   readers; the knob's position, not only its colour, shows the state. */
+.filters .checkbox input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 51px;
+  min-height: 0;
+  height: 31px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--switch-off);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filters .checkbox input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.filters .checkbox input:checked {
+  background: var(--switch-on);
+}
+
+.filters .checkbox input:checked::after {
+  transform: translateX(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filters .checkbox input,
+  .filters .checkbox input::after {
+    transition: none;
+  }
+}
+
+.filter-actions {
+  grid-column: 3 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.filter-actions button,
+.filter-actions a {
+  min-height: 44px;
+  padding: 0 1.25rem;
+}
+
+.filter-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent-text);
+  background: var(--fill);
+}
+
+@media (max-width: 47.99rem) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filters .checkbox,
+  .filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .filter-actions > * {
+    flex: 1;
+  }
+}
+
+.finished-toggle,
+.empty-state {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+/* Sort panel: phones only; wide screens sort from the column headings. */
+.sort-panel {
+  display: none;
+}
+
+@media (max-width: 47.99rem) {
+  .sort-panel {
+    display: block;
+  }
+
+  .sort-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .sort-chips a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--fill);
+  }
+
+  .sort-chips a[aria-current="true"] {
+    font-weight: 600;
+    color: var(--on-accent);
+    background: var(--accent);
+  }
+}
+
+/* Status pill and priority dot. Each shows its value as text, so colour is
+   never the only signal. */
+.badge {
+  display: inline-block;
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge[data-status="Not started"] {
+  color: var(--s-not-started);
+  background: var(--s-not-started-bg);
+}
+
+.badge[data-status="In progress"] {
+  color: var(--s-in-progress);
+  background: var(--s-in-progress-bg);
+}
+
+.badge[data-status="On hold"] {
+  color: var(--s-on-hold);
+  background: var(--s-on-hold-bg);
+}
+
+.badge[data-status="Done"] {
+  color: var(--s-done);
+  background: var(--s-done-bg);
+}
+
+.badge[data-status="Abandoned"] {
+  color: var(--s-abandoned);
+  background: var(--s-abandoned-bg);
+}
+
+.priority::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  vertical-align: 0.1em;
+  background: var(--p-low);
+}
+
+.priority[data-priority="High"]::before {
+  background: var(--p-high);
+}
+
+.priority[data-priority="Medium"]::before {
+  background: var(--p-medium);
+}
+
+/* Tables */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.project-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.project-table th,
+.project-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 0.5px solid var(--separator);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.project-table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.project-table th a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 28px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.project-table th a:hover {
+  text-decoration: underline;
+}
+
+.project-table th[aria-sort] a {
+  color: var(--accent-text);
+}
+
+.project-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.project-table .name {
+  min-width: 12rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.project-list .name a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.project-list .name a:hover {
+  text-decoration: underline;
+}
+
+.project-list tbody tr:hover {
+  background: var(--fill);
+}
+
+.project-table .date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* Phones: each row becomes a card, with the status pill top right and the other
+   fields wrapping underneath. The headings stay for screen readers (Safari 17
+   keeps table semantics on rows restyled like this). */
+@media (max-width: 47.99rem) {
+  .table-wrap:has(> .project-list) {
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+  }
+
+  .project-list,
+  .project-list tbody {
+    display: block;
+  }
+
+  .project-list thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .project-list tr {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.125rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .project-list tbody tr:hover {
+    background: var(--surface);
+  }
+
+  .project-list td {
+    display: block;
+    padding: 0;
+    border: 0;
+    color: var(--muted);
+  }
+
+  /* Leave room on the right for the status pill. */
+  .project-list td.name {
+    flex: 1 1 100%;
+    min-width: 0;
+    padding-right: 7.25rem;
+    font-size: 1.0625rem;
+  }
+
+  /* The name link covers the whole card, so the card is one big tap target. */
+  .project-list td.name a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .project-list tr:has(.name a:focus-visible) {
+    outline: 3px solid var(--accent-text);
+    outline-offset: 2px;
+  }
+
+  .project-list td.status {
+    position: absolute;
+    top: 1rem;
+    right: 1.125rem;
+  }
+
+  .project-list td.priority {
+    order: 1;
+  }
+
+  .project-list td.category {
+    order: 2;
+  }
+
+  .project-list td.medium {
+    order: 3;
+    margin-left: -0.375rem;
+  }
+
+  .project-list td.medium::before {
+    content: "·" / "";
+    margin-right: 0.375rem;
+  }
+
+  .project-list td.start {
+    order: 4;
+  }
+
+  .project-list td.target {
+    order: 5;
+  }
+
+  /* Labels for the dates; the hidden headings already name them for screen
+     readers, so the labels have empty alt text. */
+  .project-list td.start::before {
+    content: "Start " / "";
+  }
+
+  .project-list td.target::before {
+    content: "Target " / "";
+  }
+
+  .project-list td.date.empty {
+    display: none;
+  }
+}
+
+/* Import preview: outcome colour, a left edge and a symbol, beside the
+   outcome word, so colour is never the only signal. */
+.import-table .outcome {
+  min-width: 14rem;
+  font-weight: 600;
+}
+
+.import-table .outcome::before {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.375rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: 0.05em;
+  color: var(--surface);
+}
+
+.import-valid .outcome {
+  color: var(--ok-text);
+}
+
+.import-valid .outcome::before {
+  content: "✓" / "";
+  background: var(--ok-text);
+}
+
+.import-invalid .outcome {
+  color: var(--danger);
+}
+
+.import-invalid .outcome::before {
+  content: "!" / "";
+  background: var(--danger);
+}
+
+.import-skipped .outcome {
+  color: var(--muted);
+}
+
+.import-skipped .outcome::before {
+  content: "–" / "";
+  background: var(--muted);
+}
+
+.import-valid td:first-child {
+  box-shadow: inset 4px 0 var(--ok-text);
+}
+
+.import-invalid td:first-child {
+  box-shadow: inset 4px 0 var(--danger);
+}
+
+.import-skipped td:first-child {
+  box-shadow: inset 4px 0 var(--muted);
+}
+
+.row-messages {
+  margin: 0.375rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+/* Phones: each preview row becomes a card. The labels come from CSS by
+   position, so they must follow importer.preview.COLUMNS (Row, Outcome, then
+   name, category, medium, priority, status, start date, target date). The
+   hidden headings name the cells for screen readers, so labels have empty alt
+   text. */
+@media (max-width: 47.99rem) {
+  .table-wrap:has(> .import-table) {
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+  }
+
+  .import-table,
+  .import-table tbody {
+    display: block;
+  }
+
+  .import-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .import-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem 1rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.125rem 1rem 1.375rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .import-valid {
+    box-shadow: inset 5px 0 var(--ok-text), var(--shadow) !important;
+  }
+
+  .import-invalid {
+    box-shadow: inset 5px 0 var(--danger), var(--shadow) !important;
+  }
+
+  .import-skipped {
+    box-shadow: inset 5px 0 var(--muted), var(--shadow) !important;
+  }
+
+  .import-table td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+    box-shadow: none !important;
+  }
+
+  .import-table td:nth-child(-n + 3) {
+    grid-column: 1 / -1;
+  }
+
+  .import-table td:nth-child(1) {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .import-table td:nth-child(1)::before {
+    content: "Row " / "";
+  }
+
+  .import-table .outcome {
+    min-width: 0;
+  }
+
+  .import-table td:nth-child(n + 3)::before {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .import-table td:nth-child(3)::before {
+    content: "Name" / "";
+  }
+
+  .import-table td:nth-child(4)::before {
+    content: "Category" / "";
+  }
+
+  .import-table td:nth-child(5)::before {
+    content: "Medium" / "";
+  }
+
+  .import-table td:nth-child(6)::before {
+    content: "Priority" / "";
+  }
+
+  .import-table td:nth-child(7)::before {
+    content: "Status" / "";
+  }
+
+  .import-table td:nth-child(8)::before {
+    content: "Start date" / "";
+  }
+
+  .import-table td:nth-child(9)::before {
+    content: "Target date" / "";
+  }
+}
+
+/* Project detail: a grouped list, label left and value right. */
+.fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.fields dt,
+.fields dd {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  margin: 0;
+  padding: 0.625rem 1rem;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.fields dd {
+  justify-content: flex-end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.fields dt:last-of-type,
+.fields dd:last-of-type {
+  border-bottom: 0;
+}
+
+.fields .priority::before {
+  margin-right: 0.5rem;
+}
+
+/* Destructive actions */
+.actions a.danger {
+  color: var(--danger);
+  background: var(--danger-tint);
+}
+
+/* Text pages: import help, delete confirmation, 413 */
+main p,
+main li {
+  max-width: 40rem;
+}
+
+main > ul {
+  padding-left: 1.25rem;
+}
+
+main > ul li + li {
+  margin-top: 0.5rem;
+}
+
+code {
+  padding: 0.0625rem 0.3125rem;
+  border-radius: 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  background: var(--fill);
+}
+
+.field input[type="file"] {
+  min-height: 0;
+  padding: 0.5rem;
+  font-size: max(0.9375rem, 16px);
+  cursor: pointer;
+}
+
+.field input[type="file"]::file-selector-button {
+  min-height: 40px;
+  margin-right: 0.75rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent-tint);
+  cursor: pointer;
 }
