@@ -72,8 +72,8 @@ Open <http://127.0.0.1:5000/>. The pages are:
 
 | Page | What it does |
 | --- | --- |
-| `/` | The project list: a table you can filter by category, medium, priority, and status, and sort by clicking any column heading (click again to reverse). Done and Abandoned projects are hidden until you click **Show finished projects**. |
-| `/projects/new` | Form to add a project. Also linked as **New project** in the header. |
+| `/` | The project list: a table you can filter by category, medium, priority, and status (under **Filters**), and sort by clicking any column heading (click again to reverse). On a phone each project is a card and you sort with the **Sort** button instead. Done and Abandoned projects are hidden until you click **Show finished projects**. |
+| `/projects/new` | Form to add a project. Also linked as **New project** in the header (the tab bar at the bottom on a phone). |
 | `/projects/<id>` | One project's details, with **Edit** and **Delete** links. |
 | `/projects/<id>/edit` | Change any field. To finish a project, set its status to Done or Abandoned; it stays in the tracker. |
 | `/projects/<id>/delete` | Asks for confirmation; only the **Delete project** button removes it, permanently. |
@@ -101,6 +101,32 @@ Priority sorts by importance (High, Medium, Low) and status in workflow order
 (Not started, In progress, On hold, Done, Abandoned), not alphabetically. Names sort
 ignoring case. Projects without a date always sort after those with one.
 Example: `/?category=Tech&priority=High&sort=start_date&dir=asc`.
+
+### On an iPhone
+
+The app is styled for Safari on an iPhone first and works as a Home Screen web app.
+In Safari, open the tracker, tap **Share**, then **Add to Home Screen**. The icon
+is a white checkmark on blue, labelled **Projects**. Opened from the Home Screen it
+runs full screen without Safari's address bar, the layout stays clear of the notch,
+Dynamic Island and home indicator, and on narrow screens the navigation is a tab
+bar at the bottom. It follows the phone's Light/Dark setting.
+
+This works over plain HTTP on the LAN or tailnet: from iOS 26 every site added to
+the Home Screen opens as a web app, and older iOS versions use the manifest's
+`"display": "standalone"`. What HTTP can't give you is anything that needs a
+secure context, such as a service worker, so there is no offline mode and no push
+notifications.
+
+The home-screen icon, `project_tracker/static/apple-touch-icon.png`, is generated.
+To change it, edit the colours or checkmark in `scripts/make_icon.py`, then run:
+
+```bash
+.venv/bin/python scripts/make_icon.py   # rewrites project_tracker/static/apple-touch-icon.png
+.venv/bin/python -m pytest              # a test checks the PNG matches the script
+```
+
+iOS copies the icon when you add the app, so remove and re-add the Home Screen
+icon to see a new one.
 
 The development server is for local use only. Production runs under Gunicorn and
 systemd; see [docs/deployment.md](docs/deployment.md).

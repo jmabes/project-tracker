@@ -7,5 +7,7 @@
   <p>Uploads can be up to {{ limit }}. A spreadsheet of a few hundred projects is
     far smaller than that, so check that you chose the right file, or remove
     unneeded sheets, images and columns before trying again.</p>
-  <p><a href="{{ url_for('imports.upload_form') }}">Back to import</a></p>
+  <div class="actions">
+    <a href="{{ url_for('imports.upload_form') }}">Back to import</a>
+  </div>
 {% endblock %}
